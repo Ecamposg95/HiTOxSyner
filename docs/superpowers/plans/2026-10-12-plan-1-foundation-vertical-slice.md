@@ -1173,7 +1173,8 @@ def login(data: LoginRequest, response: Response, db: Session = Depends(get_db))
 @router.post("/logout", status_code=204)
 def logout(response: Response):
     response.delete_cookie(COOKIE_NAME, path="/")
-    return Response(status_code=204)
+    response.status_code = 204
+    return response
 
 
 @router.get("/me", response_model=UserRead)
