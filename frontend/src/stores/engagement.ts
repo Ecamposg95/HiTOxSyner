@@ -11,6 +11,7 @@ interface EngagementState {
   load: () => Promise<void>;
   select: (id: string) => void;
   refreshCurrent: () => Promise<void>;
+  reset: () => void;
 }
 
 function readSaved(): string | null {
@@ -30,6 +31,9 @@ export const useEngagementStore = create<EngagementState>((set, get) => ({
     const saved = readSaved();
     const current = engagements.find((e) => e.id === saved) ?? engagements[0] ?? null;
     set({ engagements, current, loaded: true });
+  },
+  reset() {
+    set({ engagements: [], current: null, loaded: false });
   },
   select(id) {
     const current = get().engagements.find((e) => e.id === id) ?? null;

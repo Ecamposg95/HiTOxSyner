@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ActionsPage } from "./pages/ActionsPage";
@@ -14,11 +14,24 @@ import { useEngagementStore } from "./stores/engagement";
 function RequireAuth() {
   const status = useAuthStore((s) => s.status);
   const { loaded, load } = useEngagementStore();
+  const [error, setError] = useState(false);
+  const attempt = useCallback(() => {
+    setError(false);
+    load().catch(() => setError(true));
+  }, [load]);
   useEffect(() => {
-    if (status === "authenticated" && !loaded) void load();
-  }, [status, loaded, load]);
+    if (status === "authenticated" && !loaded && !error) attempt();
+  }, [status, loaded, error, attempt]);
   if (status === "unknown") return <div className="p-8 text-sm text-muted">Cargando…</div>;
   if (status === "anonymous") return <Navigate to="/login" replace />;
+  if (error) {
+    return (
+      <div className="p-8">
+        <p className="text-sm text-danger">No se pudieron cargar los engagements.</p>
+        <button className="btn mt-3" onClick={attempt}>Reintentar</button>
+      </div>
+    );
+  }
   if (!loaded) return <div className="p-8 text-sm text-muted">Cargando engagement…</div>;
   return <Outlet />;
 }

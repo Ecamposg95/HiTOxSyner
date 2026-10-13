@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { actionsApi, ActionInput } from "../api/actions";
 import { errorMessage } from "../api/client";
+import { engagementsApi } from "../api/engagements";
 import { initiativesApi } from "../api/initiatives";
 import { DataTable } from "../components/DataTable";
 import { EmptyState } from "../components/EmptyState";
@@ -17,7 +18,7 @@ import { useAuthStore } from "../stores/auth";
 import { useEngagementStore } from "../stores/engagement";
 import type { Action } from "../types";
 
-const EMPTY: ActionInput = { title: "", description: "", owner_name: "", organization_side: "CLIENT", initiative_id: null, due_date: null, priority: "Medium", status: "Open", evidence: "" };
+const EMPTY: ActionInput = { title: "", description: "", owner_name: "", owner_user_id: null, organization_side: "CLIENT", initiative_id: null, due_date: null, priority: "Medium", status: "Open", evidence: "" };
 
 export function ActionsPage({ mine = false }: { mine?: boolean }) {
   const user = useAuthStore((s) => s.user);
@@ -28,12 +29,16 @@ export function ActionsPage({ mine = false }: { mine?: boolean }) {
     [engagementId, status, mine],
   );
   const initiatives = useResource(() => initiativesApi.list(engagementId), [engagementId]);
+  const writable = can(user, "write");
+  const users = useResource(
+    () => (writable ? engagementsApi.users(engagementId) : Promise.resolve([])),
+    [engagementId, writable],
+  );
   const [editing, setEditing] = useState<Action | null>(null);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<ActionInput>(EMPTY);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const writable = can(user, "write");
 
   function canEdit(a: Action) {
     return writable || (user?.role === "HITO_COLLABORATOR" && a.owner_user_id === user.id);
@@ -42,7 +47,7 @@ export function ActionsPage({ mine = false }: { mine?: boolean }) {
   function openEdit(a: Action) {
     if (!canEdit(a)) return;
     setEditing(a);
-    setForm({ title: a.title, description: a.description, owner_name: a.owner_name, organization_side: a.organization_side, initiative_id: a.initiative_id, due_date: a.due_date, priority: a.priority, status: a.status, evidence: a.evidence });
+    setForm({ title: a.title, description: a.description, owner_name: a.owner_name, owner_user_id: a.owner_user_id, organization_side: a.organization_side, initiative_id: a.initiative_id, due_date: a.due_date, priority: a.priority, status: a.status, evidence: a.evidence });
     setFormError(null); setOpen(true);
   }
   const set = (key: keyof ActionInput, value: unknown) => setForm((f) => ({ ...f, [key]: value }));
@@ -94,7 +99,15 @@ export function ActionsPage({ mine = false }: { mine?: boolean }) {
           <>
             <Field label="Acción"><input className="input" value={form.title ?? ""} onChange={(e) => set("title", e.target.value)} required maxLength={200} /></Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Responsable (nombre)"><input className="input" value={form.owner_name ?? ""} onChange={(e) => set("owner_name", e.target.value)} maxLength={200} /></Field>
+              <Field label="Responsable (usuario)">
+                <select className="input" value={form.owner_user_id ?? ""} onChange={(e) => set("owner_user_id", e.target.value || null)}>
+                  <option value="">Sin usuario</option>
+                  {users.data?.map((u) => <option key={u.id} value={u.id}>{u.full_name}</option>)}
+                </select>
+              </Field>
+              {!form.owner_user_id && (
+                <Field label="Responsable (nombre)"><input className="input" value={form.owner_name ?? ""} onChange={(e) => set("owner_name", e.target.value)} maxLength={200} /></Field>
+              )}
               <Field label="Organización"><Select value={form.organization_side ?? "CLIENT"} onChange={(v) => set("organization_side", v)} options={["CLIENT", "SYNER"]} /></Field>
               <Field label="Initiative">
                 <select className="input" value={form.initiative_id ?? ""} onChange={(e) => set("initiative_id", e.target.value || null)}>

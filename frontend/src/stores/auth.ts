@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { authApi } from "../api/auth";
 import { setUnauthorizedHandler } from "../api/client";
+import { useEngagementStore } from "./engagement";
 import type { User } from "../types";
 
 type Status = "unknown" | "anonymous" | "authenticated";
@@ -30,8 +31,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   async logout() {
     await authApi.logout();
+    useEngagementStore.getState().reset();
     set({ user: null, status: "anonymous" });
   },
 }));
 
-setUnauthorizedHandler(() => useAuthStore.setState({ user: null, status: "anonymous" }));
+setUnauthorizedHandler(() => {
+  useEngagementStore.getState().reset();
+  useAuthStore.setState({ user: null, status: "anonymous" });
+});
