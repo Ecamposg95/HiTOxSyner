@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import IntegrityError
 
 from app.core.config import get_settings
 from app.routers import actions, activity, auth, dashboard, engagements, findings, health, initiatives
@@ -41,6 +42,12 @@ async def rate_limit(request: Request, call_next):
             return JSONResponse(status_code=429, content={"detail": "Too many requests"})
         window.append(now)
     return await call_next(request)
+
+
+@app.exception_handler(IntegrityError)
+async def integrity_error(request: Request, exc: IntegrityError):
+    logger.warning("Integrity error on %s %s: %s", request.method, request.url.path, type(exc.orig).__name__)
+    return JSONResponse(status_code=422, content={"detail": "Datos inválidos o duplicados"})
 
 
 @app.exception_handler(Exception)

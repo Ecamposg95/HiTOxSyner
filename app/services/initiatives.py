@@ -7,9 +7,11 @@ from app.models.user import User
 from app.schemas.common import updates
 from app.schemas.initiative import InitiativeCreate, InitiativeUpdate
 from app.services.activity import diff_changes, log_activity
+from app.services.findings import validate_syner_owner
 
 
 def create_initiative(db: Session, *, user: User, engagement: Engagement, data: InitiativeCreate) -> Initiative:
+    validate_syner_owner(db, data.syner_owner_id)
     initiative = Initiative(
         organization_id=engagement.organization_id, engagement_id=engagement.id, created_by=user.id, **data.model_dump()
     )
@@ -26,6 +28,7 @@ def create_initiative(db: Session, *, user: User, engagement: Engagement, data: 
 
 def update_initiative(db: Session, *, user: User, initiative: Initiative, data: InitiativeUpdate) -> Initiative:
     payload = updates(data, nullable={"syner_owner_id", "start_date", "target_date"})
+    validate_syner_owner(db, payload.get("syner_owner_id"))
     changes = diff_changes(initiative, payload)
     if not changes:
         return initiative

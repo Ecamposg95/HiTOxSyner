@@ -67,3 +67,14 @@ def test_logout_clears_cookie(client, world):
     client.post("/api/auth/login", json={"email": "exec@a.example", "password": PASSWORD})
     assert client.post("/api/auth/logout").status_code == 204
     assert client.get("/api/auth/me").status_code == 401
+
+
+def test_unknown_email_still_runs_password_check(client, world, monkeypatch):
+    import app.routers.auth as auth_router
+
+    calls = []
+    monkeypatch.setattr(auth_router, "verify_password", lambda *a: calls.append(a) or False)
+    response = client.post("/api/auth/login", json={"email": "nobody@nowhere.example", "password": "whatever1"})
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Credenciales inválidas"}
+    assert len(calls) == 1

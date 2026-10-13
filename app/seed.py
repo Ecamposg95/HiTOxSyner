@@ -41,6 +41,12 @@ def _user(db: Session, org: Organization, email: str, name: str, role: Role, pas
 
 def seed(db: Session) -> None:
     settings = get_settings()
+    if settings.is_production and (
+        settings.seed_syner_password == "syner-demo"
+        or settings.seed_exec_password == "exec-demo"
+        or settings.seed_collab_password == "collab-demo"
+    ):
+        raise RuntimeError("En producción define SEED_SYNER_PASSWORD, SEED_EXEC_PASSWORD y SEED_COLLAB_PASSWORD")
     syner = _org(db, "Syner", "syner", OrganizationKind.CONSULTANCY)
     hito = _org(db, "HiTO", "hito", OrganizationKind.CLIENT)
     admin = _user(db, syner, "admin@syner.demo", "Syner Admin", Role.SYNER_ADMIN, settings.seed_syner_password)

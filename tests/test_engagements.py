@@ -87,3 +87,24 @@ def test_explicit_null_in_patch_is_422_unless_nullable(client, world):
     user_url = f"/api/engagements/{world.eng_a.id}/users/{world.collab_a.id}"
     assert client.patch(user_url, headers=headers, json={"password": None}).status_code == 422
     assert client.patch(user_url, headers=headers, json={"role": None}).status_code == 422
+
+
+def test_duplicate_email_race_returns_422_not_500(client, db, world):
+    import uuid
+
+    from app.models.enums import Role
+    from tests.factories import make_user
+
+    make_user(db, world.org_a, "dup@a.example", Role.HITO_COLLABORATOR)
+    db.commit()
+    headers = login(client, "admin@syner.example")
+    dup = client.post(
+        f"/api/engagements/{world.eng_a.id}/users", headers=headers,
+        json={"email": "DUP@a.example", "full_name": "Dup", "role": "HITO_COLLABORATOR", "password": "pass12345"},
+    )
+    assert dup.status_code == 409
+    finding = client.post(
+        f"/api/engagements/{world.eng_a.id}/findings", headers=headers,
+        json={"title": "X", "type": "Gap", "syner_owner_id": str(uuid.uuid4())},
+    )
+    assert finding.status_code == 422

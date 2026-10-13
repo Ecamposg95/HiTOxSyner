@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.security import create_access_token, verify_password
+from app.core.security import create_access_token, hash_password, verify_password
 from app.crud import users as users_crud
 from app.database import get_db
 from app.dependencies import COOKIE_NAME, get_current_user
@@ -13,12 +13,16 @@ from app.schemas.auth import LoginRequest, TokenResponse
 from app.schemas.user import UserRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+_DUMMY_HASH = hash_password("dummy-password-for-timing")
 
 
 @router.post("/login", response_model=TokenResponse)
 def login(data: LoginRequest, response: Response, db: Session = Depends(get_db)):
     user = users_crud.get_by_email(db, data.email)
-    if user is None or not user.is_active or not verify_password(data.password, user.password_hash):
+    if user is None:
+        verify_password(data.password, _DUMMY_HASH)
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
+    if not user.is_active or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
     token = create_access_token(user_id=str(user.id), organization_id=str(user.organization_id), role=user.role.value)
     user.last_login_at = datetime.now(timezone.utc)

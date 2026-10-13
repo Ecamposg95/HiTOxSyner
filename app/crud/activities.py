@@ -16,7 +16,7 @@ def list_for_engagement(
     if entity_id:
         query = query.where(Activity.entity_id == entity_id)
     total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
-    items = list(db.scalars(query.order_by(Activity.created_at.desc()).limit(limit).offset(offset)))
+    items = list(db.scalars(query.order_by(Activity.created_at.desc(), Activity.id.desc()).limit(limit).offset(offset)))
     return items, total
 
 

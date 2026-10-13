@@ -1,7 +1,8 @@
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.engagement import Engagement
-from app.models.enums import ActivityAction, FindingStatus, InitiativeStatus
+from app.models.enums import ActivityAction, FindingStatus, InitiativeStatus, Role
 from app.models.finding import Finding
 from app.models.initiative import Initiative
 from app.models.user import User
@@ -10,7 +11,17 @@ from app.schemas.finding import FindingCreate, FindingUpdate
 from app.services.activity import diff_changes, log_activity
 
 
+def validate_syner_owner(db: Session, owner_id) -> None:
+    if owner_id is None:
+        return
+    owner = db.get(User, owner_id)
+    if owner is None or owner.role != Role.SYNER_ADMIN:
+        raise HTTPException(status_code=422, detail="syner_owner_id debe ser un usuario Syner")
+
+
+
 def create_finding(db: Session, *, user: User, engagement: Engagement, data: FindingCreate) -> Finding:
+    validate_syner_owner(db, data.syner_owner_id)
     finding = Finding(
         organization_id=engagement.organization_id,
         engagement_id=engagement.id,
@@ -30,6 +41,7 @@ def create_finding(db: Session, *, user: User, engagement: Engagement, data: Fin
 
 def update_finding(db: Session, *, user: User, finding: Finding, data: FindingUpdate) -> Finding:
     payload = updates(data, nullable={"syner_owner_id"})
+    validate_syner_owner(db, payload.get("syner_owner_id"))
     changes = diff_changes(finding, payload)
     if not changes:
         return finding

@@ -74,3 +74,12 @@ def test_explicit_null_on_required_field_is_422_but_nullable_is_allowed(client, 
     created = client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json=PAYLOAD).json()
     assert client.patch(f"/api/findings/{created['id']}", headers=admin, json={"title": None}).status_code == 422
     assert client.patch(f"/api/findings/{created['id']}", headers=admin, json={"syner_owner_id": None}).status_code == 200
+
+
+def test_syner_owner_must_be_syner_user(client, world):
+    headers = login(client, "admin@syner.example")
+    url = f"/api/engagements/{world.eng_a.id}/findings"
+    bad = client.post(url, headers=headers, json={**PAYLOAD, "syner_owner_id": str(world.exec_a.id)})
+    assert bad.status_code == 422
+    ok = client.post(url, headers=headers, json={**PAYLOAD, "syner_owner_id": str(world.admin.id)})
+    assert ok.status_code == 201, ok.text

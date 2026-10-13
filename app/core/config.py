@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -42,6 +42,12 @@ class Settings(BaseSettings):
     @classmethod
     def normalize_database_url(cls, value: str | None) -> str | None:
         return _normalize_pg(value)
+
+    @model_validator(mode="after")
+    def reject_insecure_production(self) -> "Settings":
+        if self.environment == "production" and (self.jwt_secret == "change-me" or len(self.jwt_secret) < 32):
+            raise ValueError("En producción JWT_SECRET debe definirse y tener al menos 32 caracteres")
+        return self
 
     @property
     def is_production(self) -> bool:
