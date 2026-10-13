@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
-from app.routers import health
+from app.routers import auth, health
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("hitoxsyner")
@@ -48,3 +48,4 @@ async def unhandled_exception(request: Request, exc: Exception):
 
 
 app.include_router(health.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")

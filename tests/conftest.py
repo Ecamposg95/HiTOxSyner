@@ -5,6 +5,8 @@ from app.core.config import Settings
 _boot = Settings()
 if not _boot.test_database_url:
     raise RuntimeError("TEST_DATABASE_URL no está definido; ponlo en .env")
+if "test" not in _boot.test_database_url.rsplit("/", 1)[-1]:
+    raise RuntimeError("TEST_DATABASE_URL debe apuntar a una base cuyo nombre contenga 'test'")
 os.environ["DATABASE_URL"] = _boot.test_database_url
 os.environ["ENVIRONMENT"] = "test"
 os.environ["JWT_SECRET"] = "test-secret-with-at-least-32-bytes-for-hs256"
@@ -50,3 +52,11 @@ def db():
 def client():
     with TestClient(app) as test_client:
         yield test_client
+
+
+from tests.factories import build_world  # noqa: E402
+
+
+@pytest.fixture
+def world(db):
+    return build_world(db)
