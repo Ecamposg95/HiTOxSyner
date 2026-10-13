@@ -11,6 +11,7 @@ from app.dependencies import get_current_user, get_engagement, require_roles
 from app.models.engagement import Engagement
 from app.models.enums import Role
 from app.models.user import User
+from app.schemas.common import updates
 from app.schemas.engagement import EngagementRead, EngagementUpdate
 from app.schemas.user import UserCreate, UserRead, UserUpdate
 
@@ -35,7 +36,8 @@ def update_engagement(
     engagement: Engagement = Depends(get_engagement),
     db: Session = Depends(get_db),
 ):
-    for field, value in data.model_dump(exclude_unset=True).items():
+    payload = updates(data, nullable={"subtitle", "start_date", "target_end_date"})
+    for field, value in payload.items():
         setattr(engagement, field, value)
     db.commit()
     db.refresh(engagement)
@@ -82,9 +84,9 @@ def update_user(
     target = users_crud.get(db, user_id)
     if target is None or target.organization_id != engagement.organization_id:
         raise HTTPException(status_code=404, detail="User not found")
+    payload = updates(data)
     if data.role == Role.SYNER_ADMIN:
         raise HTTPException(status_code=422, detail="Un engagement de cliente solo admite roles HITO_EXECUTIVE o HITO_COLLABORATOR")
-    payload = data.model_dump(exclude_unset=True)
     if "password" in payload:
         target.password_hash = hash_password(payload.pop("password"))
     for field, value in payload.items():

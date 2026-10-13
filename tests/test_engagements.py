@@ -77,3 +77,13 @@ def test_syner_deactivates_user(client, world):
     assert client.patch(
         f"/api/engagements/{world.eng_a.id}/users/{world.exec_b.id}", headers=headers, json={"is_active": False}
     ).status_code == 404
+
+
+def test_explicit_null_in_patch_is_422_unless_nullable(client, world):
+    headers = login(client, "admin@syner.example")
+    assert client.patch(f"/api/engagements/{world.eng_a.id}", headers=headers, json={"name": None}).status_code == 422
+    cleared = client.patch(f"/api/engagements/{world.eng_a.id}", headers=headers, json={"subtitle": None})
+    assert cleared.status_code == 200 and cleared.json()["subtitle"] is None
+    user_url = f"/api/engagements/{world.eng_a.id}/users/{world.collab_a.id}"
+    assert client.patch(user_url, headers=headers, json={"password": None}).status_code == 422
+    assert client.patch(user_url, headers=headers, json={"role": None}).status_code == 422
