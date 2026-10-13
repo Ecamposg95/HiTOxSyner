@@ -15,7 +15,8 @@ Este es el plan 1 de 3. Plan 2 cubre milestones/roadmap, decisions, meetings, do
 ## Global Constraints
 
 - Python 3.12; Node 22 o superior; Postgres es la única base soportada (UUID, enums nativos, ARRAY). No hay SQLite ni en tests. Desarrollo y tests usan un Postgres local en WSL (`localhost:5432`, rol `hitoxsyner`); producción usa el Postgres de Railway, alcanzable solo desde la red interna de Railway.
-- Todos los endpoints viven bajo `/api`. Listados devuelven `{"items": [...], "total": n}` con `limit` default 50, máximo 200, y `offset` default 0.
+- Todos los endpoints viven bajo `/api`. Listados paginados de entidades (findings, initiatives, actions, activity y los módulos siguientes) devuelven `{"items": [...], "total": n}` con `limit` default 50, máximo 200, y `offset` default 0. Las colecciones acotadas `GET /engagements` y `GET /engagements/{id}/users` devuelven arrays planos.
+- Un PATCH con `null` explícito en un campo que no admite null responde 422 vía `updates(data, nullable=...)` de `app/schemas/common.py` (nunca 500).
 - Errores siempre con envelope `{"detail": "..."}`; los 500 no exponen trazas.
 - Nada en el código menciona HiTO como constante salvo los nombres de rol del brief (`SYNER_ADMIN`, `HITO_EXECUTIVE`, `HITO_COLLABORATOR`) y el seed.
 - Valores de enums exactamente como el brief: `On Track`, `Attention`, `At Risk`; `New`, `Under Analysis`, `Validated`, `Converted to Initiative`, `Accepted`, `Closed`; `Discovery`, `Design`, `Validation`, `Execution`, `Monitoring`, `Completed`, `On Hold`; `Open`, `In Progress`, `Blocked`, `Completed`, `Cancelled`; `Low`, `Medium`, `High`, `Critical`.
@@ -1781,6 +1782,13 @@ def test_title_is_required_and_limited(client, world):
     admin = login(client, "admin@syner.example")
     assert client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json={}).status_code == 422
     assert client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json={"title": "x" * 201}).status_code == 422
+
+
+def test_explicit_null_on_required_field_is_422_but_nullable_is_allowed(client, world):
+    admin = login(client, "admin@syner.example")
+    created = client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json=PAYLOAD).json()
+    assert client.patch(f"/api/findings/{created['id']}", headers=admin, json={"title": None}).status_code == 422
+    assert client.patch(f"/api/findings/{created['id']}", headers=admin, json={"syner_owner_id": None}).status_code == 200
 ```
 
 - [ ] **Step 2: Correr para verificar que fallan**
@@ -1953,6 +1961,7 @@ from app.models.engagement import Engagement
 from app.models.enums import ActivityAction
 from app.models.finding import Finding
 from app.models.user import User
+from app.schemas.common import updates
 from app.schemas.finding import FindingCreate, FindingUpdate
 from app.services.activity import diff_changes, log_activity
 
@@ -1976,7 +1985,7 @@ def create_finding(db: Session, *, user: User, engagement: Engagement, data: Fin
 
 
 def update_finding(db: Session, *, user: User, finding: Finding, data: FindingUpdate) -> Finding:
-    payload = data.model_dump(exclude_unset=True)
+    payload = updates(data, nullable={"syner_owner_id"})
     changes = diff_changes(finding, payload)
     if not changes:
         return finding
@@ -2065,7 +2074,7 @@ En `app/models/__init__.py` agregar `from app.models.finding import Finding` y `
 - [ ] **Step 4: Correr los tests**
 
 Run: `.venv/bin/pytest tests -v`
-Expected: PASS (34 passed).
+Expected: PASS (35 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -2128,6 +2137,14 @@ def test_initiatives_isolated_by_organization(client, world):
 def test_progress_out_of_range_is_422(client, world):
     admin = login(client, "admin@syner.example")
     assert client.post(f"/api/engagements/{world.eng_a.id}/initiatives", headers=admin, json={**INITIATIVE, "progress_pct": 120}).status_code == 422
+
+
+def test_explicit_null_rules_on_update(client, world):
+    admin = login(client, "admin@syner.example")
+    created = client.post(f"/api/engagements/{world.eng_a.id}/initiatives", headers=admin, json={**INITIATIVE, "target_date": "2026-12-01"}).json()
+    assert client.patch(f"/api/initiatives/{created['id']}", headers=admin, json={"name": None}).status_code == 422
+    cleared = client.patch(f"/api/initiatives/{created['id']}", headers=admin, json={"target_date": None})
+    assert cleared.status_code == 200 and cleared.json()["target_date"] is None
 
 
 def test_convert_finding_creates_initiative_once(client, world):
@@ -2347,6 +2364,7 @@ from app.models.engagement import Engagement
 from app.models.enums import ActivityAction
 from app.models.initiative import Initiative
 from app.models.user import User
+from app.schemas.common import updates
 from app.schemas.initiative import InitiativeCreate, InitiativeUpdate
 from app.services.activity import diff_changes, log_activity
 
@@ -2367,7 +2385,7 @@ def create_initiative(db: Session, *, user: User, engagement: Engagement, data: 
 
 
 def update_initiative(db: Session, *, user: User, initiative: Initiative, data: InitiativeUpdate) -> Initiative:
-    payload = data.model_dump(exclude_unset=True)
+    payload = updates(data, nullable={"syner_owner_id", "start_date", "target_date"})
     changes = diff_changes(initiative, payload)
     if not changes:
         return initiative
@@ -2517,7 +2535,7 @@ En `app/main.py` importar `initiatives` e incluir `app.include_router(initiative
 - [ ] **Step 4: Correr los tests**
 
 Run: `.venv/bin/pytest tests -v`
-Expected: PASS (40 passed).
+Expected: PASS (42 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -2599,6 +2617,14 @@ def test_actions_isolated_by_organization(client, world):
     created = client.post(f"/api/engagements/{world.eng_a.id}/actions", headers=admin, json=ACTION).json()
     assert client.patch(f"/api/actions/{created['id']}", headers=login(client, "collab@b.example"), json={"status": "Completed"}).status_code == 404
     assert client.get(f"/api/engagements/{world.eng_a.id}/actions", headers=login(client, "exec@b.example")).status_code == 404
+
+
+def test_explicit_null_rules_on_update(client, world):
+    admin = login(client, "admin@syner.example")
+    created = client.post(f"/api/engagements/{world.eng_a.id}/actions", headers=admin, json=ACTION).json()
+    assert client.patch(f"/api/actions/{created['id']}", headers=admin, json={"status": None}).status_code == 422
+    cleared = client.patch(f"/api/actions/{created['id']}", headers=admin, json={"due_date": None})
+    assert cleared.status_code == 200 and cleared.json()["due_date"] is None
 
 
 def test_status_change_logs_activity(client, world):
@@ -2779,6 +2805,7 @@ from app.models.engagement import Engagement
 from app.models.enums import ActivityAction
 from app.models.user import User
 from app.schemas.action import ActionCreate, ActionUpdate
+from app.schemas.common import updates
 from app.services.activity import diff_changes, log_activity
 
 
@@ -2806,7 +2833,7 @@ def create_action(db: Session, *, user: User, engagement: Engagement, data: Acti
 
 
 def update_action(db: Session, *, user: User, action: Action, data: ActionUpdate) -> Action:
-    payload = data.model_dump(exclude_unset=True)
+    payload = updates(data, nullable={"owner_user_id", "initiative_id", "due_date"})
     _resolve_owner_name(db, payload)
     changes = diff_changes(action, payload)
     if not changes:
@@ -2941,7 +2968,7 @@ En `app/main.py` importar `actions` e incluir `app.include_router(actions.router
 - [ ] **Step 4: Correr los tests**
 
 Run: `.venv/bin/pytest tests -v`
-Expected: PASS (47 passed).
+Expected: PASS (53 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -3116,7 +3143,7 @@ En `app/main.py` importar `dashboard` e incluir `app.include_router(dashboard.ro
 - [ ] **Step 4: Correr los tests**
 
 Run: `.venv/bin/pytest tests -v`
-Expected: PASS (49 passed).
+Expected: PASS (55 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -3292,7 +3319,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Correr el test del seed**
 
 Run: `.venv/bin/pytest tests -v`
-Expected: PASS (50 passed).
+Expected: PASS (53 passed).
 
 - [ ] **Step 5: Inicializar Alembic y generar la migración inicial contra la base de desarrollo**
 
@@ -5304,7 +5331,7 @@ def spa(full_path: str):
 - [ ] **Step 4: Correr todos los tests**
 
 Run: `.venv/bin/pytest tests -v`
-Expected: PASS (52 passed).
+Expected: PASS (55 passed).
 
 - [ ] **Step 5: Dockerfile, .dockerignore y railway.json**
 
@@ -5403,7 +5430,7 @@ git commit -m "feat: servir frontend desde FastAPI, Dockerfile y configuración 
 
 ## Verificación final del plan 1
 
-- `.venv/bin/pytest tests -v` → 52 passed.
+- `.venv/bin/pytest tests -v` → 55 passed (más los tests añadidos en fix rounds).
 - `cd frontend && npm run build` → sin errores.
 - `curl https://<dominio>/api/health` → `{"status":"ok","database":"ok"}`.
 - Login en el dominio con los tres usuarios demo; el dashboard carga; crear finding → convertir → ver initiative → crear action → completar action → tile Open Actions cambia.
