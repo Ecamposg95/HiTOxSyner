@@ -2619,6 +2619,19 @@ def test_actions_isolated_by_organization(client, world):
     assert client.get(f"/api/engagements/{world.eng_a.id}/actions", headers=login(client, "exec@b.example")).status_code == 404
 
 
+def test_links_must_belong_to_engagement(client, world):
+    admin = login(client, "admin@syner.example")
+    other_initiative = client.post(f"/api/engagements/{world.eng_b.id}/initiatives", headers=admin, json={"name": "De B"}).json()
+    base = f"/api/engagements/{world.eng_a.id}/actions"
+    assert client.post(base, headers=admin, json={**ACTION, "initiative_id": other_initiative["id"]}).status_code == 422
+    assert client.post(base, headers=admin, json={**ACTION, "owner_user_id": str(world.collab_b.id)}).status_code == 422
+    syner_owned = client.post(base, headers=admin, json={**ACTION, "owner_user_id": str(world.admin.id)})
+    assert syner_owned.status_code == 201 and syner_owned.json()["owner_name"] == "Syner Admin"
+    created = client.post(base, headers=admin, json=ACTION).json()
+    assert client.patch(f"/api/actions/{created['id']}", headers=admin, json={"initiative_id": other_initiative["id"]}).status_code == 422
+    assert client.patch(f"/api/actions/{created['id']}", headers=admin, json={"owner_user_id": str(world.exec_b.id)}).status_code == 422
+
+
 def test_explicit_null_rules_on_update(client, world):
     admin = login(client, "admin@syner.example")
     created = client.post(f"/api/engagements/{world.eng_a.id}/actions", headers=admin, json=ACTION).json()
@@ -2679,7 +2692,7 @@ class Action(EngagementScopedMixin, Base):
     owner_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), index=True, nullable=True)
     owner_name: Mapped[str] = mapped_column(String(200), default="", nullable=False)
     organization_side: Mapped[OrganizationSide] = mapped_column(
-        db_enum(OrganizationSide, "organization_side"), default=OrganizationSide.CLIENT, nullable=False
+        db_enum(OrganizationSide, "action_organization_side"), default=OrganizationSide.CLIENT, nullable=False
     )
     initiative_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("initiatives.id"), index=True, nullable=True)
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -2798,15 +2811,31 @@ def list_by_initiative(db: Session, initiative_id: uuid.UUID) -> list[Action]:
 `app/services/actions.py`:
 
 ```python
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.action import Action
 from app.models.engagement import Engagement
-from app.models.enums import ActivityAction
+from app.models.enums import ActivityAction, Role
+from app.models.initiative import Initiative
 from app.models.user import User
 from app.schemas.action import ActionCreate, ActionUpdate
 from app.schemas.common import updates
 from app.services.activity import diff_changes, log_activity
+
+
+def _validate_links(db: Session, engagement: Engagement, payload: dict) -> None:
+    """initiative_id debe ser del mismo engagement; owner_user_id de la organización del engagement o un SYNER_ADMIN."""
+    initiative_id = payload.get("initiative_id")
+    if initiative_id is not None:
+        initiative = db.get(Initiative, initiative_id)
+        if initiative is None or initiative.engagement_id != engagement.id:
+            raise HTTPException(status_code=422, detail="initiative_id no pertenece a este engagement")
+    owner_id = payload.get("owner_user_id")
+    if owner_id is not None:
+        owner = db.get(User, owner_id)
+        if owner is None or (owner.organization_id != engagement.organization_id and owner.role != Role.SYNER_ADMIN):
+            raise HTTPException(status_code=422, detail="owner_user_id no pertenece a este engagement")
 
 
 def _resolve_owner_name(db: Session, payload: dict) -> None:
@@ -2819,6 +2848,7 @@ def _resolve_owner_name(db: Session, payload: dict) -> None:
 
 def create_action(db: Session, *, user: User, engagement: Engagement, data: ActionCreate) -> Action:
     payload = data.model_dump()
+    _validate_links(db, engagement, payload)
     _resolve_owner_name(db, payload)
     action = Action(organization_id=engagement.organization_id, engagement_id=engagement.id, created_by=user.id, **payload)
     db.add(action)
@@ -2834,13 +2864,14 @@ def create_action(db: Session, *, user: User, engagement: Engagement, data: Acti
 
 def update_action(db: Session, *, user: User, action: Action, data: ActionUpdate) -> Action:
     payload = updates(data, nullable={"owner_user_id", "initiative_id", "due_date"})
+    engagement = db.get(Engagement, action.engagement_id)
+    _validate_links(db, engagement, payload)
     _resolve_owner_name(db, payload)
     changes = diff_changes(action, payload)
     if not changes:
         return action
     for field, value in payload.items():
         setattr(action, field, value)
-    engagement = db.get(Engagement, action.engagement_id)
     status_change = next((c for c in changes if c["field"] == "status"), None)
     if status_change:
         activity_action = ActivityAction.STATUS_CHANGED
