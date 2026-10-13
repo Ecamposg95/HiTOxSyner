@@ -7,7 +7,7 @@ if not _boot.test_database_url:
     raise RuntimeError("TEST_DATABASE_URL no está definido; ponlo en .env")
 os.environ["DATABASE_URL"] = _boot.test_database_url
 os.environ["ENVIRONMENT"] = "test"
-os.environ["JWT_SECRET"] = "test-secret"
+os.environ["JWT_SECRET"] = "test-secret-with-at-least-32-bytes-for-hs256"
 os.environ["RATE_LIMIT_ENABLED"] = "false"
 
 from app.core.config import get_settings  # noqa: E402
