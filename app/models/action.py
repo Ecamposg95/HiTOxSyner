@@ -17,7 +17,7 @@ class Action(EngagementScopedMixin, Base):
     owner_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), index=True, nullable=True)
     owner_name: Mapped[str] = mapped_column(String(200), default="", nullable=False)
     organization_side: Mapped[OrganizationSide] = mapped_column(
-        db_enum(OrganizationSide, "organization_side"), default=OrganizationSide.CLIENT, nullable=False
+        db_enum(OrganizationSide, "action_organization_side"), default=OrganizationSide.CLIENT, nullable=False
     )
     initiative_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("initiatives.id"), index=True, nullable=True)
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)

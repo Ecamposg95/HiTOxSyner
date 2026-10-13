@@ -84,3 +84,16 @@ def test_initiative_detail_aggregates_related_entities(client, world):
     assert len(body["actions"]) == 1
     assert any(a["entity_id"] == converted["id"] or a["entity_id"] == finding["id"] for a in body["activity"])
     assert client.get(f"/api/initiatives/{initiative['id']}/detail", headers=login(client, "exec@b.example")).status_code == 404
+
+
+def test_links_must_belong_to_engagement(client, world):
+    admin = login(client, "admin@syner.example")
+    other_initiative = client.post(f"/api/engagements/{world.eng_b.id}/initiatives", headers=admin, json={"name": "De B"}).json()
+    base = f"/api/engagements/{world.eng_a.id}/actions"
+    assert client.post(base, headers=admin, json={**ACTION, "initiative_id": other_initiative["id"]}).status_code == 422
+    assert client.post(base, headers=admin, json={**ACTION, "owner_user_id": str(world.collab_b.id)}).status_code == 422
+    syner_owned = client.post(base, headers=admin, json={**ACTION, "owner_user_id": str(world.admin.id)})
+    assert syner_owned.status_code == 201 and syner_owned.json()["owner_name"] == "Syner Admin"
+    created = client.post(base, headers=admin, json=ACTION).json()
+    assert client.patch(f"/api/actions/{created['id']}", headers=admin, json={"initiative_id": other_initiative["id"]}).status_code == 422
+    assert client.patch(f"/api/actions/{created['id']}", headers=admin, json={"owner_user_id": str(world.exec_b.id)}).status_code == 422
