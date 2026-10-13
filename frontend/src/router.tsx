@@ -3,6 +3,8 @@ import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { FindingsPage } from "./pages/FindingsPage";
+import { InitiativesPage } from "./pages/InitiativesPage";
+import { InitiativeDetailPage } from "./pages/InitiativeDetailPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { useAuthStore } from "./stores/auth";
@@ -30,7 +32,8 @@ export const router = createBrowserRouter([
         children: [
           { path: "/", element: <DashboardPage /> },
           { path: "/findings", element: <FindingsPage /> },
-          { path: "/initiatives", element: <ComingSoonPage title="Initiatives" /> },
+          { path: "/initiatives", element: <InitiativesPage /> },
+          { path: "/initiatives/:id", element: <InitiativeDetailPage /> },
           { path: "/roadmap", element: <ComingSoonPage title="Roadmap" /> },
           { path: "/actions", element: <ComingSoonPage title="Actions" /> },
           { path: "/decisions", element: <ComingSoonPage title="Decisions" /> },
