@@ -34,7 +34,7 @@ Criterio de éxito: el producto se puede usar en una reunión real con HiTO para
 
 ## 3. Stack
 
-- Backend: Python 3.12, FastAPI, SQLAlchemy 2, Pydantic v2, Alembic, PostgreSQL, passlib[bcrypt], python-jose (JWT HS256), pytest, httpx.
+- Backend: Python 3.12, FastAPI, SQLAlchemy 2, Pydantic v2, Alembic, PostgreSQL, bcrypt, PyJWT (JWT HS256), pytest, httpx.
 - Frontend: React 18, TypeScript, Vite, React Router, Zustand, Axios, Tailwind CSS, Recharts.
 - Infra: Railway, Dockerfile multi-stage (node 22 build → python 3.12-slim runtime), `railway.json` con healthcheck `/api/health`, variables de entorno para todos los secretos.
 
