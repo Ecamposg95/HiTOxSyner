@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
+import { ActionsPage } from "./pages/ActionsPage";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { FindingsPage } from "./pages/FindingsPage";
 import { InitiativesPage } from "./pages/InitiativesPage";
@@ -35,7 +36,8 @@ export const router = createBrowserRouter([
           { path: "/initiatives", element: <InitiativesPage /> },
           { path: "/initiatives/:id", element: <InitiativeDetailPage /> },
           { path: "/roadmap", element: <ComingSoonPage title="Roadmap" /> },
-          { path: "/actions", element: <ComingSoonPage title="Actions" /> },
+          { path: "/actions", element: <ActionsPage /> },
+          { path: "/actions/mine", element: <ActionsPage mine /> },
           { path: "/decisions", element: <ComingSoonPage title="Decisions" /> },
           { path: "/meetings", element: <ComingSoonPage title="Meetings" /> },
           { path: "/documents", element: <ComingSoonPage title="Documents" /> },
