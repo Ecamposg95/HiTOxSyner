@@ -27,3 +27,14 @@ Rol `hitoxsyner` / password `hitoxsyner` con CREATEDB; bases `hitoxsyner_dev` (d
 - Railway construye con el `Dockerfile`; el contenedor ejecuta `alembic upgrade head` y luego `uvicorn`.
 - Variables en Railway: `DATABASE_URL`, `JWT_SECRET`, `ENVIRONMENT=production`, `SEED_*_PASSWORD` (solo si se corre el seed).
 - Health: `GET /api/health`.
+
+### Despliegue en Railway
+
+- El builder del servicio debe ser Dockerfile. Hoy se fuerza con la variable de servicio `RAILWAY_DOCKERFILE_PATH=Dockerfile` (configurada en el dashboard, fuera del repo).
+- `railway up` desde un mount `/mnt/d` de WSL sube archivos corruptos (bytes NUL). Copia el repo al filesystem nativo y despliega desde ahí:
+  `rsync -a --exclude .venv --exclude node_modules --exclude .git /mnt/d/Devs/HiTOxSyner/ ~/hitoxsyner-upload/` y luego, dentro de `~/hitoxsyner-upload/`, `railway up --service HiTOxSyner --detach`.
+- `railway ssh` puede requerir `-i ~/.ssh/id_railway_atlas`.
+- El seed de producción corre dentro del contenedor: `railway ssh --service HiTOxSyner -- python -m app.seed`.
+- La base `hitoxsyner` vive en el servicio Postgres compartido y se creó con `railway ssh --service Postgres -- psql -U postgres -c 'CREATE DATABASE "hitoxsyner"'`.
+- Variables del servicio: `ENVIRONMENT=production`, `DATABASE_URL`, `JWT_SECRET` (≥32 bytes), `JWT_EXPIRE_HOURS`, `CORS_ORIGINS`, `RATE_LIMIT_ENABLED`, `RATE_LIMIT_PER_MINUTE`, `SEED_SYNER_PASSWORD`, `SEED_EXEC_PASSWORD`, `SEED_COLLAB_PASSWORD`. Nunca se versionan sus valores.
+- En producción la app no arranca con `JWT_SECRET` por defecto o menor a 32 caracteres, y el seed se niega a usar las passwords demo.
