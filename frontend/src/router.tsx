@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
+import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { useAuthStore } from "./stores/auth";
 import { useEngagementStore } from "./stores/engagement";
@@ -26,7 +27,7 @@ export const router = createBrowserRouter([
       {
         element: <AppShell />,
         children: [
-          { path: "/", element: <ComingSoonPage title="Overview" /> },
+          { path: "/", element: <DashboardPage /> },
           { path: "/findings", element: <ComingSoonPage title="Findings" /> },
           { path: "/initiatives", element: <ComingSoonPage title="Initiatives" /> },
           { path: "/roadmap", element: <ComingSoonPage title="Roadmap" /> },
