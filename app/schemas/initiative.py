@@ -4,6 +4,9 @@ from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import InitiativeStatus, Level
+from app.schemas.action import ActionRead
+from app.schemas.activity import ActivityRead
+from app.schemas.finding import FindingRead
 
 
 class InitiativeCreate(BaseModel):
@@ -68,3 +71,10 @@ class InitiativeRead(BaseModel):
     dependencies: str
     created_at: datetime
     updated_at: datetime
+
+
+class InitiativeDetail(BaseModel):
+    initiative: InitiativeRead
+    findings: list[FindingRead]
+    actions: list[ActionRead]
+    activity: list[ActivityRead]

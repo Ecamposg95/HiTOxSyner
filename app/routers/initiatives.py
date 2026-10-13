@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.crud import actions as actions_crud
+from app.crud import activities as activities_crud
+from app.crud import findings as findings_crud
 from app.crud import initiatives as initiatives_crud
 from app.database import get_db
 from app.dependencies import get_engagement, require_roles, scoped
@@ -9,7 +12,10 @@ from app.models.enums import InitiativeStatus, Role
 from app.models.initiative import Initiative
 from app.models.user import User
 from app.schemas.common import Page, Pagination, pagination_params
-from app.schemas.initiative import InitiativeCreate, InitiativeRead, InitiativeUpdate
+from app.schemas.action import ActionRead
+from app.schemas.activity import ActivityRead
+from app.schemas.finding import FindingRead
+from app.schemas.initiative import InitiativeCreate, InitiativeDetail, InitiativeRead, InitiativeUpdate
 from app.services import initiatives as initiatives_service
 
 router = APIRouter(tags=["initiatives"])
@@ -53,3 +59,25 @@ def update_initiative(
     db: Session = Depends(get_db),
 ):
     return initiatives_service.update_initiative(db, user=user, initiative=initiative, data=data)
+
+
+@router.get("/initiatives/{initiative_id}/detail", response_model=InitiativeDetail)
+def initiative_detail(initiative: Initiative = scoped_initiative, db: Session = Depends(get_db)):
+    findings = findings_crud.list_by_initiative(db, initiative.id)
+    actions = actions_crud.list_by_initiative(db, initiative.id)
+    own_activity, _ = activities_crud.list_for_engagement(
+        db, initiative.engagement_id, entity_type="initiative", entity_id=initiative.id, limit=20
+    )
+    finding_activity = []
+    for finding in findings:
+        items, _ = activities_crud.list_for_engagement(
+            db, initiative.engagement_id, entity_type="finding", entity_id=finding.id, limit=5
+        )
+        finding_activity.extend(items)
+    activity = sorted(own_activity + finding_activity, key=lambda a: a.created_at, reverse=True)[:20]
+    return InitiativeDetail(
+        initiative=InitiativeRead.model_validate(initiative),
+        findings=[FindingRead.model_validate(f) for f in findings],
+        actions=[ActionRead.model_validate(a) for a in actions],
+        activity=[ActivityRead.model_validate(a) for a in activity],
+    )
