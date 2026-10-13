@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
+import { FindingsPage } from "./pages/FindingsPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { useAuthStore } from "./stores/auth";
@@ -28,7 +29,7 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { path: "/", element: <DashboardPage /> },
-          { path: "/findings", element: <ComingSoonPage title="Findings" /> },
+          { path: "/findings", element: <FindingsPage /> },
           { path: "/initiatives", element: <ComingSoonPage title="Initiatives" /> },
           { path: "/roadmap", element: <ComingSoonPage title="Roadmap" /> },
           { path: "/actions", element: <ComingSoonPage title="Actions" /> },
