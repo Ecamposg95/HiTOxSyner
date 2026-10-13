@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.crud import findings as findings_crud
@@ -10,6 +10,7 @@ from app.models.finding import Finding
 from app.models.user import User
 from app.schemas.common import Page, Pagination, pagination_params
 from app.schemas.finding import FindingCreate, FindingRead, FindingUpdate
+from app.schemas.initiative import InitiativeRead
 from app.services import findings as findings_service
 
 router = APIRouter(tags=["findings"])
@@ -54,3 +55,15 @@ def update_finding(
     db: Session = Depends(get_db),
 ):
     return findings_service.update_finding(db, user=user, finding=finding, data=data)
+
+
+@router.post("/findings/{finding_id}/convert", response_model=InitiativeRead, status_code=201)
+def convert_finding(
+    user: User = syner_only,
+    finding: Finding = scoped_finding,
+    db: Session = Depends(get_db),
+):
+    try:
+        return findings_service.convert_finding(db, user=user, finding=finding)
+    except findings_service.FindingAlreadyConverted:
+        raise HTTPException(status_code=409, detail="El finding ya fue convertido en initiative")

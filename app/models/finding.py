@@ -25,3 +25,4 @@ class Finding(EngagementScopedMixin, Base):
     syner_owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     found_on: Mapped[date] = mapped_column(Date, default=date.today, nullable=False)
     status: Mapped[FindingStatus] = mapped_column(db_enum(FindingStatus, "finding_status"), default=FindingStatus.NEW, nullable=False)
+    initiative_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("initiatives.id"), index=True, nullable=True)

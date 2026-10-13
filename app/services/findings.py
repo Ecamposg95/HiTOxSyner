@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 
 from app.models.engagement import Engagement
-from app.models.enums import ActivityAction
+from app.models.enums import ActivityAction, FindingStatus, InitiativeStatus
 from app.models.finding import Finding
+from app.models.initiative import Initiative
 from app.models.user import User
 from app.schemas.common import updates
 from app.schemas.finding import FindingCreate, FindingUpdate
@@ -49,3 +50,41 @@ def update_finding(db: Session, *, user: User, finding: Finding, data: FindingUp
     db.commit()
     db.refresh(finding)
     return finding
+
+
+class FindingAlreadyConverted(Exception):
+    pass
+
+
+def convert_finding(db: Session, *, user: User, finding: Finding) -> Initiative:
+    if finding.initiative_id is not None:
+        raise FindingAlreadyConverted
+    engagement = db.get(Engagement, finding.engagement_id)
+    initiative = Initiative(
+        organization_id=engagement.organization_id,
+        engagement_id=engagement.id,
+        created_by=user.id,
+        name=finding.title,
+        description=finding.description,
+        objective=finding.recommendation,
+        area=finding.area,
+        priority=finding.impact,
+        status=InitiativeStatus.DISCOVERY,
+    )
+    db.add(initiative)
+    db.flush()
+    before_status = finding.status.value
+    finding.initiative_id = initiative.id
+    finding.status = FindingStatus.CONVERTED
+    log_activity(
+        db, user=user, engagement=engagement, action=ActivityAction.CONVERTED, entity_type="finding",
+        entity_id=finding.id,
+        summary=f'{user.full_name} converted Finding "{finding.title}" into Initiative "{initiative.name}"',
+        changes=[
+            {"field": "status", "before": before_status, "after": FindingStatus.CONVERTED.value},
+            {"field": "initiative_id", "before": None, "after": str(initiative.id)},
+        ],
+    )
+    db.commit()
+    db.refresh(initiative)
+    return initiative

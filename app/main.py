@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
-from app.routers import activity, auth, engagements, findings, health
+from app.routers import activity, auth, engagements, findings, health, initiatives
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("hitoxsyner")
@@ -52,3 +52,4 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(engagements.router, prefix="/api")
 app.include_router(activity.router, prefix="/api")
 app.include_router(findings.router, prefix="/api")
+app.include_router(initiatives.router, prefix="/api")
