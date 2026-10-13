@@ -14,7 +14,7 @@ Este es el plan 1 de 3. Plan 2 cubre milestones/roadmap, decisions, meetings, do
 
 ## Global Constraints
 
-- Python 3.12; Node 22 o superior; Postgres es la única base soportada (UUID, enums nativos, ARRAY). No hay SQLite ni en tests.
+- Python 3.12; Node 22 o superior; Postgres es la única base soportada (UUID, enums nativos, ARRAY). No hay SQLite ni en tests. Desarrollo y tests usan un Postgres local en WSL (`localhost:5432`, rol `hitoxsyner`); producción usa el Postgres de Railway, alcanzable solo desde la red interna de Railway.
 - Todos los endpoints viven bajo `/api`. Listados devuelven `{"items": [...], "total": n}` con `limit` default 50, máximo 200, y `offset` default 0.
 - Errores siempre con envelope `{"detail": "..."}`; los 500 no exponen trazas.
 - Nada en el código menciona HiTO como constante salvo los nombres de rol del brief (`SYNER_ADMIN`, `HITO_EXECUTIVE`, `HITO_COLLABORATOR`) y el seed.
@@ -82,47 +82,35 @@ Run:
 cd /mnt/d/Devs/HiTOxSyner
 python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
 ```
-Expected: instalación sin errores. Usar `.venv/bin/python` y `.venv/bin/pytest` en todos los pasos siguientes.
+Expected: instalación sin errores. Si `python3 -m venv` falla por falta de `python3.12-venv`, usar `uv venv --python 3.12 .venv && uv pip install -r requirements.txt` (uv ya está instalado). Usar `.venv/bin/python` y `.venv/bin/pytest` en todos los pasos siguientes.
 
-- [ ] **Step 2: Crear las bases `hitoxsyner` (producción), `hitoxsyner_dev` (desarrollo local) y `hitoxsyner_test` (tests) en el Postgres de Railway**
+- [ ] **Step 2: Verificar el Postgres local y crear las bases `hitoxsyner_dev` y `hitoxsyner_test`**
+
+Postgres corre localmente en WSL (lo instaló el usuario con sudo; rol `hitoxsyner` con password `hitoxsyner` y permiso CREATEDB). El Postgres de Railway no es alcanzable desde esta máquina (sin TCP proxy); la base de producción `hitoxsyner` se crea en Railway en Task 16.
 
 ```bash
 cd /mnt/d/Devs/HiTOxSyner
-railway link --project 712a7fba-0fe2-4284-b4cd-edfb9c8990fb --environment production --service HiTOxSyner
-railway variables --service Postgres --kv | grep '^DATABASE_PUBLIC_URL=' | cut -d= -f2- > /tmp/claude-1000/pg_admin_url.txt
-PG_ADMIN_URL="$(cat /tmp/claude-1000/pg_admin_url.txt)" .venv/bin/python - <<'EOF'
-import os, psycopg
-url = os.environ["PG_ADMIN_URL"]
-with psycopg.connect(url, autocommit=True) as conn:
-    for name in ("hitoxsyner", "hitoxsyner_dev", "hitoxsyner_test"):
-        if not conn.execute("SELECT 1 FROM pg_database WHERE datname=%s", (name,)).fetchone():
-            conn.execute(f'CREATE DATABASE "{name}"')
-            print("created", name)
-        else:
-            print("exists", name)
-EOF
-```
-Luego escribir `.env` (no se commitea) reemplazando el nombre de base al final de la URL pública:
-
-```bash
-ADMIN="$(cat /tmp/claude-1000/pg_admin_url.txt)"
-BASE="${ADMIN%/*}"
+pg_isready -h localhost
+for db in hitoxsyner_dev hitoxsyner_test; do
+  PGPASSWORD=hitoxsyner psql -h localhost -U hitoxsyner -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 \
+    || PGPASSWORD=hitoxsyner createdb -h localhost -U hitoxsyner "$db"
+done
+PGPASSWORD=hitoxsyner psql -h localhost -U hitoxsyner -d postgres -tAc "SELECT datname FROM pg_database WHERE datname LIKE 'hitoxsyner%'"
 cat > .env <<EOF
 ENVIRONMENT=development
-DATABASE_URL=${BASE}/hitoxsyner_dev
-TEST_DATABASE_URL=${BASE}/hitoxsyner_test
+DATABASE_URL=postgresql://hitoxsyner:hitoxsyner@localhost:5432/hitoxsyner_dev
+TEST_DATABASE_URL=postgresql://hitoxsyner:hitoxsyner@localhost:5432/hitoxsyner_test
 JWT_SECRET=dev-only-change-me
 EOF
-rm /tmp/claude-1000/pg_admin_url.txt
 ```
-Expected: `created hitoxsyner`, `created hitoxsyner_dev`, `created hitoxsyner_test` (o `exists`). No hay Postgres local ni Docker en esta máquina, por eso desarrollo y tests usan bases separadas dentro del mismo Postgres de Railway; producción usa `hitoxsyner` y nunca se toca desde `.env`. Si `railway link` pide login, ejecutar `railway login` (el usuario autorizó usar Railway).
+Expected: `localhost:5432 - accepting connections` y el listado muestra `hitoxsyner_dev` y `hitoxsyner_test`. Si `pg_isready` falla, el servicio no está arriba: reportar BLOCKED pidiendo `sudo service postgresql start`. `.env` no se commitea.
 
 - [ ] **Step 3: Escribir `.env.example`**
 
 ```
 ENVIRONMENT=development
-DATABASE_URL=postgresql://user:password@host:5432/hitoxsyner_dev
-TEST_DATABASE_URL=postgresql://user:password@host:5432/hitoxsyner_test
+DATABASE_URL=postgresql://hitoxsyner:hitoxsyner@localhost:5432/hitoxsyner_dev
+TEST_DATABASE_URL=postgresql://hitoxsyner:hitoxsyner@localhost:5432/hitoxsyner_test
 JWT_SECRET=change-me
 JWT_EXPIRE_HOURS=12
 CORS_ORIGINS=http://localhost:5173
@@ -5370,35 +5358,38 @@ __pycache__
 
 - [ ] **Step 6: Configurar variables en Railway y desplegar**
 
+El Postgres de Railway solo es alcanzable desde la red interna de Railway, así que la base de producción se crea con `railway ssh` dentro del contenedor de Postgres. Las passwords demo se generan aquí y se guardan como variables del servicio para que el usuario las consulte en el dashboard de Railway, nunca en el chat.
+
 ```bash
 cd /mnt/d/Devs/HiTOxSyner
+railway link --project 712a7fba-0fe2-4284-b4cd-edfb9c8990fb --environment production --service HiTOxSyner
+railway ssh --service Postgres -- psql -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='hitoxsyner'" | grep -q 1 \
+  || railway ssh --service Postgres -- psql -U postgres -c 'CREATE DATABASE "hitoxsyner"'
 JWT_SECRET="$(openssl rand -base64 48)"
+SYNER_PW="$(openssl rand -base64 12)"; EXEC_PW="$(openssl rand -base64 12)"; COLLAB_PW="$(openssl rand -base64 12)"
 railway variables --service HiTOxSyner \
   --set "ENVIRONMENT=production" \
   --set "JWT_SECRET=${JWT_SECRET}" \
-  --set 'DATABASE_URL=postgresql://${{Postgres.PGUSER}}:${{Postgres.PGPASSWORD}}@${{Postgres.RAILWAY_PRIVATE_DOMAIN}}:5432/hitoxsyner'
+  --set 'DATABASE_URL=postgresql://${{Postgres.PGUSER}}:${{Postgres.PGPASSWORD}}@${{Postgres.RAILWAY_PRIVATE_DOMAIN}}:5432/hitoxsyner' \
+  --set "SEED_SYNER_PASSWORD=${SYNER_PW}" --set "SEED_EXEC_PASSWORD=${EXEC_PW}" --set "SEED_COLLAB_PASSWORD=${COLLAB_PW}"
 railway up --service HiTOxSyner --detach
 railway domain --service HiTOxSyner
 ```
+Si `psql -U postgres` dentro del contenedor pide password, usar `railway ssh --service Postgres -- sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -U "$POSTGRES_USER" -c "CREATE DATABASE \"hitoxsyner\""'`.
 Expected: el deploy termina en estado SUCCESS (revisar con `railway logs --service HiTOxSyner` que aparece `Running upgrade  -> <rev>, initial` y luego `Uvicorn running`). `railway domain` imprime la URL pública.
 
-- [ ] **Step 7: Sembrar datos demo en la base de producción y verificar**
-
-Las passwords demo se generan y se guardan como variables del servicio para que el usuario las consulte en el dashboard de Railway, no en el chat:
+- [ ] **Step 7: Sembrar datos demo en producción (dentro del contenedor) y verificar**
 
 ```bash
-SYNER_PW="$(openssl rand -base64 12)"; EXEC_PW="$(openssl rand -base64 12)"; COLLAB_PW="$(openssl rand -base64 12)"
-railway variables --service HiTOxSyner --set "SEED_SYNER_PASSWORD=${SYNER_PW}" --set "SEED_EXEC_PASSWORD=${EXEC_PW}" --set "SEED_COLLAB_PASSWORD=${COLLAB_PW}"
-PROD_URL="$(railway variables --service Postgres --kv | grep '^DATABASE_PUBLIC_URL=' | cut -d= -f2-)"
-DATABASE_URL="${PROD_URL%/*}/hitoxsyner" SEED_SYNER_PASSWORD="$SYNER_PW" SEED_EXEC_PASSWORD="$EXEC_PW" SEED_COLLAB_PASSWORD="$COLLAB_PW" .venv/bin/python -m app.seed
-DOMAIN="$(railway domain --service HiTOxSyner --json 2>/dev/null | grep -o 'https://[^"]*' | head -1)"
+railway ssh --service HiTOxSyner -- python -m app.seed
+DOMAIN="$(railway domain --service HiTOxSyner 2>/dev/null | grep -o 'https://[^ ]*' | head -1)"
 curl -s "${DOMAIN}/api/health"
 curl -s -o /dev/null -w "%{http_code}\n" "${DOMAIN}/login"
 curl -s -X POST "${DOMAIN}/api/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"admin@syner.demo\",\"password\":\"${SYNER_PW}\"}" | grep -o '"role":"SYNER_ADMIN"'
 ```
-Expected: `{"status":"ok","database":"ok"}`, `200`, y `"role":"SYNER_ADMIN"`. Si `railway domain --json` no existe en esta versión del CLI, tomar la URL impresa en el paso anterior.
+Expected: `Seed completado.`, `{"status":"ok","database":"ok"}`, `200`, y `"role":"SYNER_ADMIN"`. Si `railway domain` no imprime la URL, tomarla del paso anterior o del dashboard.
 
-Nota: Task 10 corrió migración y seed contra `hitoxsyner_dev` (la de `.env`). Este paso es la única vez que se toca `hitoxsyner` (producción) desde la máquina local, y solo para el seed idempotente.
+Nota: Task 10 corrió migración y seed contra `hitoxsyner_dev` local. Producción (`hitoxsyner` en Railway) solo se toca desde dentro de Railway: migración en el arranque del contenedor y seed vía `railway ssh`.
 
 - [ ] **Step 8: Commit**
 
