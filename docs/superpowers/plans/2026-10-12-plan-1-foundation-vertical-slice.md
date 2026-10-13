@@ -808,15 +808,15 @@ def make_user(db, org, email, role, full_name=None, password=PASSWORD, is_active
 
 def build_world(db):
     syner = make_org(db, "Syner", "syner", OrganizationKind.CONSULTANCY)
-    admin = make_user(db, syner, "admin@syner.test", Role.SYNER_ADMIN, "Syner Admin")
+    admin = make_user(db, syner, "admin@syner.example", Role.SYNER_ADMIN, "Syner Admin")
     org_a = make_org(db, "Cliente A", "cliente-a")
     org_b = make_org(db, "Cliente B", "cliente-b")
     eng_a = make_engagement(db, org_a, "Programa A")
     eng_b = make_engagement(db, org_b, "Programa B")
-    exec_a = make_user(db, org_a, "exec@a.test", Role.HITO_EXECUTIVE, "Exec A")
-    collab_a = make_user(db, org_a, "collab@a.test", Role.HITO_COLLABORATOR, "Collab A")
-    exec_b = make_user(db, org_b, "exec@b.test", Role.HITO_EXECUTIVE, "Exec B")
-    collab_b = make_user(db, org_b, "collab@b.test", Role.HITO_COLLABORATOR, "Collab B")
+    exec_a = make_user(db, org_a, "exec@a.example", Role.HITO_EXECUTIVE, "Exec A")
+    collab_a = make_user(db, org_a, "collab@a.example", Role.HITO_COLLABORATOR, "Collab A")
+    exec_b = make_user(db, org_b, "exec@b.example", Role.HITO_EXECUTIVE, "Exec B")
+    collab_b = make_user(db, org_b, "collab@b.example", Role.HITO_COLLABORATOR, "Collab B")
     db.commit()
     for obj in (syner, admin, org_a, org_b, eng_a, eng_b, exec_a, collab_a, exec_b, collab_b):
         db.refresh(obj)
@@ -852,43 +852,43 @@ from app.models.enums import Role
 
 
 def test_login_returns_token_and_sets_cookie(client, world):
-    response = client.post("/api/auth/login", json={"email": "admin@syner.test", "password": PASSWORD})
+    response = client.post("/api/auth/login", json={"email": "admin@syner.example", "password": PASSWORD})
     assert response.status_code == 200
     body = response.json()
     assert body["token_type"] == "bearer"
-    assert body["user"]["email"] == "admin@syner.test"
+    assert body["user"]["email"] == "admin@syner.example"
     assert body["user"]["role"] == "SYNER_ADMIN"
     assert body["user"]["organization_name"] == "Syner"
     assert "access_token" in response.cookies
 
 
 def test_login_is_case_insensitive_on_email(client, world):
-    response = client.post("/api/auth/login", json={"email": "ADMIN@Syner.test", "password": PASSWORD})
+    response = client.post("/api/auth/login", json={"email": "ADMIN@Syner.example", "password": PASSWORD})
     assert response.status_code == 200
 
 
 def test_login_rejects_wrong_password(client, world):
-    response = client.post("/api/auth/login", json={"email": "admin@syner.test", "password": "nope"})
+    response = client.post("/api/auth/login", json={"email": "admin@syner.example", "password": "nope"})
     assert response.status_code == 401
     assert response.json() == {"detail": "Credenciales inválidas"}
 
 
 def test_login_rejects_inactive_user(client, db, world):
-    make_user(db, world.org_a, "off@a.test", Role.HITO_COLLABORATOR, is_active=False)
+    make_user(db, world.org_a, "off@a.example", Role.HITO_COLLABORATOR, is_active=False)
     db.commit()
-    response = client.post("/api/auth/login", json={"email": "off@a.test", "password": PASSWORD})
+    response = client.post("/api/auth/login", json={"email": "off@a.example", "password": PASSWORD})
     assert response.status_code == 401
 
 
 def test_me_with_bearer(client, world):
-    headers = login(client, "exec@a.test")
+    headers = login(client, "exec@a.example")
     response = client.get("/api/auth/me", headers=headers)
     assert response.status_code == 200
     assert response.json()["role"] == "HITO_EXECUTIVE"
 
 
 def test_me_with_cookie_only(client, world):
-    client.post("/api/auth/login", json={"email": "exec@a.test", "password": PASSWORD})
+    client.post("/api/auth/login", json={"email": "exec@a.example", "password": PASSWORD})
     response = client.get("/api/auth/me")
     assert response.status_code == 200
 
@@ -905,14 +905,14 @@ def test_me_with_expired_token_is_401(client, world):
 
 
 def test_me_for_deactivated_user_is_401(client, db, world):
-    headers = login(client, "collab@a.test")
+    headers = login(client, "collab@a.example")
     world.collab_a.is_active = False
     db.commit()
     assert client.get("/api/auth/me", headers=headers).status_code == 401
 
 
 def test_logout_clears_cookie(client, world):
-    client.post("/api/auth/login", json={"email": "exec@a.test", "password": PASSWORD})
+    client.post("/api/auth/login", json={"email": "exec@a.example", "password": PASSWORD})
     assert client.post("/api/auth/logout").status_code == 204
     assert client.get("/api/auth/me").status_code == 401
 ```
@@ -1217,25 +1217,25 @@ from tests.factories import login
 
 
 def test_syner_lists_all_engagements(client, world):
-    headers = login(client, "admin@syner.test")
+    headers = login(client, "admin@syner.example")
     response = client.get("/api/engagements", headers=headers)
     assert response.status_code == 200
     assert {e["name"] for e in response.json()} == {"Programa A", "Programa B"}
 
 
 def test_client_user_lists_only_own_engagements(client, world):
-    headers = login(client, "exec@a.test")
+    headers = login(client, "exec@a.example")
     names = {e["name"] for e in client.get("/api/engagements", headers=headers).json()}
     assert names == {"Programa A"}
 
 
 def test_client_user_cannot_read_other_org_engagement(client, world):
-    headers = login(client, "exec@b.test")
+    headers = login(client, "exec@b.example")
     assert client.get(f"/api/engagements/{world.eng_a.id}", headers=headers).status_code == 404
 
 
 def test_syner_updates_summary_health_and_progress(client, world):
-    headers = login(client, "admin@syner.test")
+    headers = login(client, "admin@syner.example")
     response = client.patch(
         f"/api/engagements/{world.eng_a.id}",
         headers=headers,
@@ -1249,41 +1249,41 @@ def test_syner_updates_summary_health_and_progress(client, world):
 
 
 def test_executive_patch_own_engagement_is_403(client, world):
-    headers = login(client, "exec@a.test")
+    headers = login(client, "exec@a.example")
     response = client.patch(f"/api/engagements/{world.eng_a.id}", headers=headers, json={"progress_pct": 50})
     assert response.status_code == 403
 
 
 def test_progress_out_of_range_is_422(client, world):
-    headers = login(client, "admin@syner.test")
+    headers = login(client, "admin@syner.example")
     assert client.patch(f"/api/engagements/{world.eng_a.id}", headers=headers, json={"progress_pct": 101}).status_code == 422
     assert client.patch(f"/api/engagements/{world.eng_a.id}", headers=headers, json={"executive_summary": "x" * 2001}).status_code == 422
 
 
 def test_syner_creates_client_user(client, world):
-    headers = login(client, "admin@syner.test")
-    payload = {"email": "Nuevo@A.test", "full_name": "Nuevo", "password": "password123", "role": "HITO_COLLABORATOR"}
+    headers = login(client, "admin@syner.example")
+    payload = {"email": "Nuevo@A.example", "full_name": "Nuevo", "password": "password123", "role": "HITO_COLLABORATOR"}
     response = client.post(f"/api/engagements/{world.eng_a.id}/users", headers=headers, json=payload)
     assert response.status_code == 201
-    assert response.json()["email"] == "nuevo@a.test"
+    assert response.json()["email"] == "nuevo@a.example"
     assert response.json()["organization_id"] == str(world.org_a.id)
     assert client.post(f"/api/engagements/{world.eng_a.id}/users", headers=headers, json=payload).status_code == 409
-    assert login(client, "nuevo@a.test", "password123")
+    assert login(client, "nuevo@a.example", "password123")
 
 
 def test_cannot_create_syner_admin_inside_client_engagement(client, world):
-    headers = login(client, "admin@syner.test")
-    payload = {"email": "x@a.test", "full_name": "X", "password": "password123", "role": "SYNER_ADMIN"}
+    headers = login(client, "admin@syner.example")
+    payload = {"email": "x@a.example", "full_name": "X", "password": "password123", "role": "SYNER_ADMIN"}
     assert client.post(f"/api/engagements/{world.eng_a.id}/users", headers=headers, json=payload).status_code == 422
 
 
 def test_executive_cannot_manage_users(client, world):
-    headers = login(client, "exec@a.test")
+    headers = login(client, "exec@a.example")
     assert client.get(f"/api/engagements/{world.eng_a.id}/users", headers=headers).status_code == 403
 
 
 def test_syner_deactivates_user(client, world):
-    headers = login(client, "admin@syner.test")
+    headers = login(client, "admin@syner.example")
     response = client.patch(
         f"/api/engagements/{world.eng_a.id}/users/{world.collab_a.id}", headers=headers, json={"is_active": False}
     )
@@ -1514,7 +1514,7 @@ def test_log_activity_and_list_scoped(client, db, world):
         entity_type="finding", entity_id=uuid.uuid4(), summary="other org",
     )
     db.commit()
-    headers = login(client, "exec@a.test")
+    headers = login(client, "exec@a.example")
     response = client.get(f"/api/engagements/{world.eng_a.id}/activity", headers=headers)
     assert response.status_code == 200
     body = response.json()
@@ -1527,7 +1527,7 @@ def test_log_activity_and_list_scoped(client, db, world):
         headers=headers, params={"entity_type": "finding", "entity_id": str(uuid.uuid4())},
     ).json()
     assert filtered["total"] == 0
-    assert client.get(f"/api/engagements/{world.eng_a.id}/activity", headers=login(client, "exec@b.test")).status_code == 404
+    assert client.get(f"/api/engagements/{world.eng_a.id}/activity", headers=login(client, "exec@b.example")).status_code == 404
 ```
 
 - [ ] **Step 2: Correr para verificar que fallan**
@@ -1725,7 +1725,7 @@ PAYLOAD = {
 
 
 def test_syner_creates_finding_and_logs_activity(client, world):
-    headers = login(client, "admin@syner.test")
+    headers = login(client, "admin@syner.example")
     response = client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=headers, json=PAYLOAD)
     assert response.status_code == 201, response.text
     body = response.json()
@@ -1738,24 +1738,24 @@ def test_syner_creates_finding_and_logs_activity(client, world):
 
 
 def test_client_roles_cannot_create_findings(client, world):
-    for email in ("exec@a.test", "collab@a.test"):
+    for email in ("exec@a.example", "collab@a.example"):
         response = client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=login(client, email), json=PAYLOAD)
         assert response.status_code == 403
 
 
 def test_findings_are_isolated_by_organization(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     created = client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json=PAYLOAD).json()
     client.post(f"/api/engagements/{world.eng_b.id}/findings", headers=admin, json={**PAYLOAD, "title": "De B"})
-    listing = client.get(f"/api/engagements/{world.eng_a.id}/findings", headers=login(client, "collab@a.test")).json()
+    listing = client.get(f"/api/engagements/{world.eng_a.id}/findings", headers=login(client, "collab@a.example")).json()
     assert listing["total"] == 1
     assert listing["items"][0]["title"] == "Conciliación manual diaria"
-    assert client.get(f"/api/findings/{created['id']}", headers=login(client, "exec@b.test")).status_code == 404
-    assert client.get(f"/api/engagements/{world.eng_b.id}/findings", headers=login(client, "exec@a.test")).status_code == 404
+    assert client.get(f"/api/findings/{created['id']}", headers=login(client, "exec@b.example")).status_code == 404
+    assert client.get(f"/api/engagements/{world.eng_b.id}/findings", headers=login(client, "exec@a.example")).status_code == 404
 
 
 def test_status_change_logs_before_and_after(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     created = client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json=PAYLOAD).json()
     response = client.patch(f"/api/findings/{created['id']}", headers=admin, json={"status": "Validated"})
     assert response.status_code == 200
@@ -1767,7 +1767,7 @@ def test_status_change_logs_before_and_after(client, world):
 
 
 def test_list_filters_by_status_and_type(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json=PAYLOAD)
     client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json={**PAYLOAD, "title": "Otro", "type": "Gap"})
     by_type = client.get(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, params={"type": "Gap"}).json()
@@ -1777,7 +1777,7 @@ def test_list_filters_by_status_and_type(client, world):
 
 
 def test_title_is_required_and_limited(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     assert client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json={}).status_code == 422
     assert client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json={"title": "x" * 201}).status_code == 422
 ```
@@ -2098,7 +2098,7 @@ FINDING = {"title": "Conciliación manual diaria", "description": "Depende de Ex
 
 
 def test_syner_creates_and_updates_initiative(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     created = client.post(f"/api/engagements/{world.eng_a.id}/initiatives", headers=admin, json=INITIATIVE)
     assert created.status_code == 201, created.text
     body = created.json()
@@ -2112,25 +2112,25 @@ def test_syner_creates_and_updates_initiative(client, world):
 
 
 def test_client_roles_cannot_write_initiatives(client, world):
-    for email in ("exec@a.test", "collab@a.test"):
+    for email in ("exec@a.example", "collab@a.example"):
         assert client.post(f"/api/engagements/{world.eng_a.id}/initiatives", headers=login(client, email), json=INITIATIVE).status_code == 403
 
 
 def test_initiatives_isolated_by_organization(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     created = client.post(f"/api/engagements/{world.eng_a.id}/initiatives", headers=admin, json=INITIATIVE).json()
-    assert client.get(f"/api/initiatives/{created['id']}", headers=login(client, "exec@b.test")).status_code == 404
-    listing = client.get(f"/api/engagements/{world.eng_a.id}/initiatives", headers=login(client, "exec@a.test")).json()
+    assert client.get(f"/api/initiatives/{created['id']}", headers=login(client, "exec@b.example")).status_code == 404
+    listing = client.get(f"/api/engagements/{world.eng_a.id}/initiatives", headers=login(client, "exec@a.example")).json()
     assert listing["total"] == 1
 
 
 def test_progress_out_of_range_is_422(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     assert client.post(f"/api/engagements/{world.eng_a.id}/initiatives", headers=admin, json={**INITIATIVE, "progress_pct": 120}).status_code == 422
 
 
 def test_convert_finding_creates_initiative_once(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     finding = client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json=FINDING).json()
     response = client.post(f"/api/findings/{finding['id']}/convert", headers=admin)
     assert response.status_code == 201, response.text
@@ -2150,9 +2150,9 @@ def test_convert_finding_creates_initiative_once(client, world):
 
 
 def test_only_syner_can_convert(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     finding = client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json=FINDING).json()
-    assert client.post(f"/api/findings/{finding['id']}/convert", headers=login(client, "exec@a.test")).status_code == 403
+    assert client.post(f"/api/findings/{finding['id']}/convert", headers=login(client, "exec@a.example")).status_code == 403
 ```
 
 - [ ] **Step 2: Correr para verificar que fallan**
@@ -2549,7 +2549,7 @@ ACTION = {"title": "Levantar inventario de hojas de cálculo", "organization_sid
 
 
 def _initiative(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     return admin, client.post(f"/api/engagements/{world.eng_a.id}/initiatives", headers=admin, json={"name": "Automatización"}).json()
 
 
@@ -2565,43 +2565,43 @@ def test_syner_creates_action_linked_to_initiative_and_owner(client, world):
 
 
 def test_client_roles_cannot_create_actions(client, world):
-    for email in ("exec@a.test", "collab@a.test"):
+    for email in ("exec@a.example", "collab@a.example"):
         assert client.post(f"/api/engagements/{world.eng_a.id}/actions", headers=login(client, email), json=ACTION).status_code == 403
 
 
 def test_collaborator_updates_only_own_actions_and_only_status_evidence(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     mine = client.post(f"/api/engagements/{world.eng_a.id}/actions", headers=admin, json={**ACTION, "owner_user_id": str(world.collab_a.id)}).json()
     other = client.post(f"/api/engagements/{world.eng_a.id}/actions", headers=admin, json={**ACTION, "title": "Otra"}).json()
-    collab = login(client, "collab@a.test")
+    collab = login(client, "collab@a.example")
     response = client.patch(f"/api/actions/{mine['id']}", headers=collab, json={"status": "In Progress", "evidence": "Inventario iniciado", "title": "Hackeado"})
     assert response.status_code == 200
     assert response.json()["status"] == "In Progress"
     assert response.json()["evidence"] == "Inventario iniciado"
     assert response.json()["title"] == ACTION["title"]
     assert client.patch(f"/api/actions/{other['id']}", headers=collab, json={"status": "Completed"}).status_code == 403
-    assert client.patch(f"/api/actions/{mine['id']}", headers=login(client, "exec@a.test"), json={"status": "Completed"}).status_code == 403
+    assert client.patch(f"/api/actions/{mine['id']}", headers=login(client, "exec@a.example"), json={"status": "Completed"}).status_code == 403
 
 
 def test_my_actions_filter(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     client.post(f"/api/engagements/{world.eng_a.id}/actions", headers=admin, json={**ACTION, "owner_user_id": str(world.collab_a.id)})
     client.post(f"/api/engagements/{world.eng_a.id}/actions", headers=admin, json={**ACTION, "title": "Otra"})
-    collab = login(client, "collab@a.test")
+    collab = login(client, "collab@a.example")
     assert client.get(f"/api/engagements/{world.eng_a.id}/actions", headers=collab).json()["total"] == 2
     mine = client.get(f"/api/engagements/{world.eng_a.id}/actions", headers=collab, params={"mine": "true"}).json()
     assert mine["total"] == 1 and mine["items"][0]["owner_user_id"] == str(world.collab_a.id)
 
 
 def test_actions_isolated_by_organization(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     created = client.post(f"/api/engagements/{world.eng_a.id}/actions", headers=admin, json=ACTION).json()
-    assert client.patch(f"/api/actions/{created['id']}", headers=login(client, "collab@b.test"), json={"status": "Completed"}).status_code == 404
-    assert client.get(f"/api/engagements/{world.eng_a.id}/actions", headers=login(client, "exec@b.test")).status_code == 404
+    assert client.patch(f"/api/actions/{created['id']}", headers=login(client, "collab@b.example"), json={"status": "Completed"}).status_code == 404
+    assert client.get(f"/api/engagements/{world.eng_a.id}/actions", headers=login(client, "exec@b.example")).status_code == 404
 
 
 def test_status_change_logs_activity(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     created = client.post(f"/api/engagements/{world.eng_a.id}/actions", headers=admin, json=ACTION).json()
     client.patch(f"/api/actions/{created['id']}", headers=admin, json={"status": "Blocked"})
     activity = client.get(f"/api/engagements/{world.eng_a.id}/activity", headers=admin).json()["items"][0]
@@ -2613,14 +2613,14 @@ def test_initiative_detail_aggregates_related_entities(client, world):
     finding = client.post(f"/api/engagements/{world.eng_a.id}/findings", headers=admin, json={"title": "Hallazgo origen"}).json()
     converted = client.post(f"/api/findings/{finding['id']}/convert", headers=admin).json()
     client.post(f"/api/engagements/{world.eng_a.id}/actions", headers=admin, json={**ACTION, "initiative_id": converted["id"]})
-    detail = client.get(f"/api/initiatives/{converted['id']}/detail", headers=login(client, "exec@a.test"))
+    detail = client.get(f"/api/initiatives/{converted['id']}/detail", headers=login(client, "exec@a.example"))
     assert detail.status_code == 200
     body = detail.json()
     assert body["initiative"]["id"] == converted["id"]
     assert [f["id"] for f in body["findings"]] == [finding["id"]]
     assert len(body["actions"]) == 1
     assert any(a["entity_id"] == converted["id"] or a["entity_id"] == finding["id"] for a in body["activity"])
-    assert client.get(f"/api/initiatives/{initiative['id']}/detail", headers=login(client, "exec@b.test")).status_code == 404
+    assert client.get(f"/api/initiatives/{initiative['id']}/detail", headers=login(client, "exec@b.example")).status_code == 404
 ```
 
 - [ ] **Step 2: Correr para verificar que fallan**
@@ -2971,7 +2971,7 @@ from tests.factories import login
 
 
 def test_dashboard_tiles_and_sections(client, world):
-    admin = login(client, "admin@syner.test")
+    admin = login(client, "admin@syner.example")
     eng = world.eng_a.id
     client.patch(f"/api/engagements/{eng}", headers=admin, json={"health": "Attention", "progress_pct": 35, "executive_summary": "Arranque."})
     client.post(f"/api/engagements/{eng}/findings", headers=admin, json={"title": "Crítico", "impact": "Critical"})
@@ -2982,7 +2982,7 @@ def test_dashboard_tiles_and_sections(client, world):
     client.post(f"/api/engagements/{eng}/actions", headers=admin, json={"title": "Abierta", "due_date": "2026-11-01", "initiative_id": active["id"]})
     client.post(f"/api/engagements/{eng}/actions", headers=admin, json={"title": "Hecha", "status": "Completed"})
 
-    response = client.get(f"/api/engagements/{eng}/dashboard", headers=login(client, "exec@a.test"))
+    response = client.get(f"/api/engagements/{eng}/dashboard", headers=login(client, "exec@a.example"))
     assert response.status_code == 200
     body = response.json()
     assert body["engagement"]["executive_summary"] == "Arranque."
@@ -3000,7 +3000,7 @@ def test_dashboard_tiles_and_sections(client, world):
 
 
 def test_dashboard_is_scoped(client, world):
-    assert client.get(f"/api/engagements/{world.eng_a.id}/dashboard", headers=login(client, "collab@b.test")).status_code == 404
+    assert client.get(f"/api/engagements/{world.eng_a.id}/dashboard", headers=login(client, "collab@b.example")).status_code == 404
 ```
 
 - [ ] **Step 2: Correr para verificar que fallan**
