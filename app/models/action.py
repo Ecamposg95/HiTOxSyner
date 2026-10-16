@@ -20,6 +20,7 @@ class Action(EngagementScopedMixin, Base):
         db_enum(OrganizationSide, "action_organization_side"), default=OrganizationSide.CLIENT, nullable=False
     )
     initiative_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("initiatives.id"), index=True, nullable=True)
+    meeting_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("meetings.id"), index=True, nullable=True)
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     priority: Mapped[Level] = mapped_column(db_enum(Level, "action_priority"), default=Level.MEDIUM, nullable=False)
     status: Mapped[ActionStatus] = mapped_column(db_enum(ActionStatus, "action_status"), default=ActionStatus.OPEN, nullable=False)

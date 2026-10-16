@@ -13,6 +13,7 @@ class ActionCreate(BaseModel):
     owner_name: str = Field(default="", max_length=200)
     organization_side: OrganizationSide = OrganizationSide.CLIENT
     initiative_id: uuid.UUID | None = None
+    meeting_id: uuid.UUID | None = None
     due_date: date | None = None
     priority: Level = Level.MEDIUM
     status: ActionStatus = ActionStatus.OPEN
@@ -26,6 +27,7 @@ class ActionUpdate(BaseModel):
     owner_name: str | None = Field(default=None, max_length=200)
     organization_side: OrganizationSide | None = None
     initiative_id: uuid.UUID | None = None
+    meeting_id: uuid.UUID | None = None
     due_date: date | None = None
     priority: Level | None = None
     status: ActionStatus | None = None
@@ -44,6 +46,7 @@ class ActionRead(BaseModel):
     owner_name: str
     organization_side: OrganizationSide
     initiative_id: uuid.UUID | None
+    meeting_id: uuid.UUID | None
     due_date: date | None
     priority: Level
     status: ActionStatus

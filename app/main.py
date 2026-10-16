@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import IntegrityError
 
 from app.core.config import get_settings
-from app.routers import actions, activity, auth, dashboard, engagements, findings, health, initiatives, milestones
+from app.routers import actions, activity, auth, dashboard, engagements, findings, health, initiatives, meetings, milestones
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("hitoxsyner")
@@ -64,6 +64,7 @@ app.include_router(findings.router, prefix="/api")
 app.include_router(initiatives.router, prefix="/api")
 app.include_router(actions.router, prefix="/api")
 app.include_router(milestones.router, prefix="/api")
+app.include_router(meetings.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 
 

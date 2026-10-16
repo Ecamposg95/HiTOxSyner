@@ -5,6 +5,7 @@ from app.models.action import Action
 from app.models.engagement import Engagement
 from app.models.enums import ActivityAction, Role
 from app.models.initiative import Initiative
+from app.models.meeting import Meeting
 from app.models.user import User
 from app.schemas.action import ActionCreate, ActionUpdate
 from app.schemas.common import updates
@@ -18,6 +19,11 @@ def _validate_links(db: Session, engagement: Engagement, payload: dict) -> None:
         initiative = db.get(Initiative, initiative_id)
         if initiative is None or initiative.engagement_id != engagement.id:
             raise HTTPException(status_code=422, detail="initiative_id no pertenece a este engagement")
+    meeting_id = payload.get("meeting_id")
+    if meeting_id is not None:
+        meeting = db.get(Meeting, meeting_id)
+        if meeting is None or meeting.engagement_id != engagement.id:
+            raise HTTPException(status_code=422, detail="meeting_id no pertenece a este engagement")
     owner_id = payload.get("owner_user_id")
     if owner_id is not None:
         owner = db.get(User, owner_id)
@@ -40,9 +46,13 @@ def create_action(db: Session, *, user: User, engagement: Engagement, data: Acti
     action = Action(organization_id=engagement.organization_id, engagement_id=engagement.id, created_by=user.id, **payload)
     db.add(action)
     db.flush()
+    summary = f'{user.full_name} created Action "{action.title}"'
+    if action.meeting_id is not None:
+        meeting = db.get(Meeting, action.meeting_id)
+        summary += f' from Meeting "{meeting.title}"'
     log_activity(
         db, user=user, engagement=engagement, action=ActivityAction.CREATED, entity_type="action",
-        entity_id=action.id, summary=f'{user.full_name} created Action "{action.title}"',
+        entity_id=action.id, summary=summary,
     )
     db.commit()
     db.refresh(action)
@@ -50,7 +60,7 @@ def create_action(db: Session, *, user: User, engagement: Engagement, data: Acti
 
 
 def update_action(db: Session, *, user: User, action: Action, data: ActionUpdate) -> Action:
-    payload = updates(data, nullable={"owner_user_id", "initiative_id", "due_date"})
+    payload = updates(data, nullable={"owner_user_id", "initiative_id", "meeting_id", "due_date"})
     engagement = db.get(Engagement, action.engagement_id)
     _validate_links(db, engagement, payload)
     _resolve_owner_name(db, payload)
