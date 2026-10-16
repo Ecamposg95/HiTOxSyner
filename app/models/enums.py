@@ -89,3 +89,10 @@ class RoadmapPhase(str, enum.Enum):
     PRIORITIZE = "Prioritize"
     EXECUTE = "Execute"
     MEASURE = "Measure"
+
+
+class MilestoneStatus(str, enum.Enum):
+    PLANNED = "Planned"
+    IN_PROGRESS = "In Progress"
+    DONE = "Done"
+    SLIPPED = "Slipped"

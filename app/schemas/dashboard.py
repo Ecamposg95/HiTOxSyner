@@ -6,6 +6,7 @@ from app.schemas.activity import ActivityRead
 from app.schemas.engagement import EngagementRead
 from app.schemas.finding import FindingRead
 from app.schemas.initiative import InitiativeRead
+from app.schemas.milestone import MilestoneRead
 
 
 class DashboardTiles(BaseModel):
@@ -19,7 +20,7 @@ class DashboardTiles(BaseModel):
 
 class RoadmapPhaseRead(BaseModel):
     phase: str
-    milestones: list[dict] = []
+    milestones: list[MilestoneRead] = []
 
 
 class DashboardRead(BaseModel):
@@ -31,4 +32,4 @@ class DashboardRead(BaseModel):
     recent_activity: list[ActivityRead]
     roadmap: list[RoadmapPhaseRead]
     decisions_required: list[dict]
-    next_milestones: list[dict]
+    next_milestones: list[MilestoneRead]

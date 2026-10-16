@@ -4,6 +4,7 @@ from app.crud import actions as actions_crud
 from app.crud import activities as activities_crud
 from app.crud import findings as findings_crud
 from app.crud import initiatives as initiatives_crud
+from app.crud import milestones as milestones_crud
 from app.models.engagement import Engagement
 from app.models.enums import RoadmapPhase
 from app.schemas.action import ActionRead
@@ -12,6 +13,14 @@ from app.schemas.dashboard import DashboardRead, DashboardTiles, RoadmapPhaseRea
 from app.schemas.engagement import EngagementRead
 from app.schemas.finding import FindingRead
 from app.schemas.initiative import InitiativeRead
+from app.schemas.milestone import MilestoneRead
+
+
+def build_roadmap(db: Session, engagement: Engagement) -> list[RoadmapPhaseRead]:
+    by_phase: dict[RoadmapPhase, list[MilestoneRead]] = {phase: [] for phase in RoadmapPhase}
+    for milestone in milestones_crud.list_all(db, engagement.id):
+        by_phase[milestone.phase].append(MilestoneRead.model_validate(milestone))
+    return [RoadmapPhaseRead(phase=phase.value, milestones=items) for phase, items in by_phase.items()]
 
 
 def build_dashboard(db: Session, engagement: Engagement) -> DashboardRead:
@@ -30,7 +39,7 @@ def build_dashboard(db: Session, engagement: Engagement) -> DashboardRead:
         key_findings=[FindingRead.model_validate(f) for f in findings_crud.key_findings(db, engagement.id)],
         next_actions=[ActionRead.model_validate(a) for a in actions_crud.next_open(db, engagement.id)],
         recent_activity=[ActivityRead.model_validate(a) for a in activities_crud.recent(db, engagement.id, limit=15)],
-        roadmap=[RoadmapPhaseRead(phase=phase.value) for phase in RoadmapPhase],
+        roadmap=build_roadmap(db, engagement),
         decisions_required=[],
-        next_milestones=[],
+        next_milestones=[MilestoneRead.model_validate(m) for m in milestones_crud.upcoming(db, engagement.id)],
     )
