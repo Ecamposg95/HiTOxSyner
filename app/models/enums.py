@@ -96,3 +96,15 @@ class MilestoneStatus(str, enum.Enum):
     IN_PROGRESS = "In Progress"
     DONE = "Done"
     SLIPPED = "Slipped"
+
+
+class DecisionStatus(str, enum.Enum):
+    PROPOSED = "Proposed"
+    UNDER_REVIEW = "Under Review"
+    APPROVED = "Approved"
+    REJECTED = "Rejected"
+    DEFERRED = "Deferred"
+
+
+RESOLUTION_STATUSES = (DecisionStatus.APPROVED, DecisionStatus.REJECTED, DecisionStatus.DEFERRED)
+PENDING_DECISION_STATUSES = (DecisionStatus.PROPOSED, DecisionStatus.UNDER_REVIEW)

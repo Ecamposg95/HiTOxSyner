@@ -3,6 +3,9 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.action import ActionRead
+from app.schemas.decision import DecisionRead
+
 
 class MeetingCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
@@ -39,3 +42,9 @@ class MeetingRead(BaseModel):
     next_steps: str
     created_at: datetime
     updated_at: datetime
+
+
+class MeetingDetail(BaseModel):
+    meeting: MeetingRead
+    decisions: list[DecisionRead]
+    actions: list[ActionRead]

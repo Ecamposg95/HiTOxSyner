@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from app.models.enums import Health
 from app.schemas.action import ActionRead
 from app.schemas.activity import ActivityRead
+from app.schemas.decision import DecisionRead
 from app.schemas.engagement import EngagementRead
 from app.schemas.finding import FindingRead
 from app.schemas.initiative import InitiativeRead
@@ -31,5 +32,5 @@ class DashboardRead(BaseModel):
     next_actions: list[ActionRead]
     recent_activity: list[ActivityRead]
     roadmap: list[RoadmapPhaseRead]
-    decisions_required: list[dict]
+    decisions_required: list[DecisionRead]
     next_milestones: list[MilestoneRead]

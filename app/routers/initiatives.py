@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.crud import actions as actions_crud
 from app.crud import activities as activities_crud
+from app.crud import decisions as decisions_crud
 from app.crud import findings as findings_crud
 from app.crud import initiatives as initiatives_crud
 from app.crud import milestones as milestones_crud
@@ -15,6 +16,7 @@ from app.models.user import User
 from app.schemas.common import Page, Pagination, pagination_params
 from app.schemas.action import ActionRead
 from app.schemas.activity import ActivityRead
+from app.schemas.decision import DecisionRead
 from app.schemas.finding import FindingRead
 from app.schemas.milestone import MilestoneRead
 from app.schemas.initiative import InitiativeCreate, InitiativeDetail, InitiativeRead, InitiativeUpdate
@@ -68,6 +70,7 @@ def initiative_detail(initiative: Initiative = scoped_initiative, db: Session = 
     findings = findings_crud.list_by_initiative(db, initiative.id)
     milestones = milestones_crud.list_by_initiative(db, initiative.id)
     actions = actions_crud.list_by_initiative(db, initiative.id)
+    decisions = decisions_crud.list_by_initiative(db, initiative.id)
     own_activity, _ = activities_crud.list_for_engagement(
         db, initiative.engagement_id, entity_type="initiative", entity_id=initiative.id, limit=20
     )
@@ -83,5 +86,6 @@ def initiative_detail(initiative: Initiative = scoped_initiative, db: Session = 
         findings=[FindingRead.model_validate(f) for f in findings],
         milestones=[MilestoneRead.model_validate(m) for m in milestones],
         actions=[ActionRead.model_validate(a) for a in actions],
+        decisions=[DecisionRead.model_validate(d) for d in decisions],
         activity=[ActivityRead.model_validate(a) for a in activity],
     )

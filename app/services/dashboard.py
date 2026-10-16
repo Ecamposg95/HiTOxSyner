@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.crud import actions as actions_crud
 from app.crud import activities as activities_crud
+from app.crud import decisions as decisions_crud
 from app.crud import findings as findings_crud
 from app.crud import initiatives as initiatives_crud
 from app.crud import milestones as milestones_crud
@@ -10,6 +11,7 @@ from app.models.enums import RoadmapPhase
 from app.schemas.action import ActionRead
 from app.schemas.activity import ActivityRead
 from app.schemas.dashboard import DashboardRead, DashboardTiles, RoadmapPhaseRead
+from app.schemas.decision import DecisionRead
 from app.schemas.engagement import EngagementRead
 from app.schemas.finding import FindingRead
 from app.schemas.initiative import InitiativeRead
@@ -29,7 +31,7 @@ def build_dashboard(db: Session, engagement: Engagement) -> DashboardRead:
         progress_pct=engagement.progress_pct,
         active_initiatives=initiatives_crud.count_active(db, engagement.id),
         open_actions=actions_crud.count_open(db, engagement.id),
-        decisions_required=0,
+        decisions_required=decisions_crud.count_required(db, engagement.id),
         critical_findings=findings_crud.count_critical_open(db, engagement.id),
     )
     return DashboardRead(
@@ -40,6 +42,6 @@ def build_dashboard(db: Session, engagement: Engagement) -> DashboardRead:
         next_actions=[ActionRead.model_validate(a) for a in actions_crud.next_open(db, engagement.id)],
         recent_activity=[ActivityRead.model_validate(a) for a in activities_crud.recent(db, engagement.id, limit=15)],
         roadmap=build_roadmap(db, engagement),
-        decisions_required=[],
+        decisions_required=[DecisionRead.model_validate(d) for d in decisions_crud.required(db, engagement.id)],
         next_milestones=[MilestoneRead.model_validate(m) for m in milestones_crud.upcoming(db, engagement.id)],
     )
