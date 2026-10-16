@@ -108,3 +108,17 @@ class DecisionStatus(str, enum.Enum):
 
 RESOLUTION_STATUSES = (DecisionStatus.APPROVED, DecisionStatus.REJECTED, DecisionStatus.DEFERRED)
 PENDING_DECISION_STATUSES = (DecisionStatus.PROPOSED, DecisionStatus.UNDER_REVIEW)
+
+
+class DocumentCategory(str, enum.Enum):
+    DISCOVERY = "Discovery"
+    ASSESSMENT = "Assessment"
+    STRATEGY = "Strategy"
+    PROCESS = "Process"
+    TECHNOLOGY = "Technology"
+    DATA = "Data"
+    AI = "AI"
+    REPORTS = "Reports"
+    MEETINGS = "Meetings"
+    DELIVERABLES = "Deliverables"
+    EVIDENCE = "Evidence"

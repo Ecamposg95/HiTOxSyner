@@ -4,11 +4,12 @@ from sqlalchemy.orm import Session
 from app.crud import actions as actions_crud
 from app.crud import activities as activities_crud
 from app.crud import decisions as decisions_crud
+from app.crud import documents as documents_crud
 from app.crud import findings as findings_crud
 from app.crud import initiatives as initiatives_crud
 from app.crud import milestones as milestones_crud
 from app.database import get_db
-from app.dependencies import get_engagement, require_roles, scoped
+from app.dependencies import get_current_user, get_engagement, require_roles, scoped
 from app.models.engagement import Engagement
 from app.models.enums import InitiativeStatus, Role
 from app.models.initiative import Initiative
@@ -17,10 +18,12 @@ from app.schemas.common import Page, Pagination, pagination_params
 from app.schemas.action import ActionRead
 from app.schemas.activity import ActivityRead
 from app.schemas.decision import DecisionRead
+from app.schemas.document import DocumentRead
 from app.schemas.finding import FindingRead
 from app.schemas.milestone import MilestoneRead
 from app.schemas.initiative import InitiativeCreate, InitiativeDetail, InitiativeRead, InitiativeUpdate
 from app.services import initiatives as initiatives_service
+from app.services.documents import can_see_internal
 
 router = APIRouter(tags=["initiatives"])
 syner_only = Depends(require_roles(Role.SYNER_ADMIN))
@@ -66,11 +69,16 @@ def update_initiative(
 
 
 @router.get("/initiatives/{initiative_id}/detail", response_model=InitiativeDetail)
-def initiative_detail(initiative: Initiative = scoped_initiative, db: Session = Depends(get_db)):
+def initiative_detail(
+    initiative: Initiative = scoped_initiative,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     findings = findings_crud.list_by_initiative(db, initiative.id)
     milestones = milestones_crud.list_by_initiative(db, initiative.id)
     actions = actions_crud.list_by_initiative(db, initiative.id)
     decisions = decisions_crud.list_by_initiative(db, initiative.id)
+    documents = documents_crud.list_by_entity(db, initiative.engagement_id, "initiative", initiative.id, include_internal=can_see_internal(user))
     own_activity, _ = activities_crud.list_for_engagement(
         db, initiative.engagement_id, entity_type="initiative", entity_id=initiative.id, limit=20
     )
@@ -87,5 +95,6 @@ def initiative_detail(initiative: Initiative = scoped_initiative, db: Session = 
         milestones=[MilestoneRead.model_validate(m) for m in milestones],
         actions=[ActionRead.model_validate(a) for a in actions],
         decisions=[DecisionRead.model_validate(d) for d in decisions],
+        documents=[DocumentRead.model_validate(d) for d in documents],
         activity=[ActivityRead.model_validate(a) for a in activity],
     )
