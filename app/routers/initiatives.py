@@ -80,12 +80,14 @@ def initiative_detail(
     decisions = decisions_crud.list_by_initiative(db, initiative.id)
     documents = documents_crud.list_by_entity(db, initiative.engagement_id, "initiative", initiative.id, include_internal=can_see_internal(user))
     own_activity, _ = activities_crud.list_for_engagement(
-        db, initiative.engagement_id, entity_type="initiative", entity_id=initiative.id, limit=20
+        db, initiative.engagement_id, entity_type="initiative", entity_id=initiative.id, limit=20,
+        include_internal=can_see_internal(user),
     )
     finding_activity = []
     for finding in findings:
         items, _ = activities_crud.list_for_engagement(
-            db, initiative.engagement_id, entity_type="finding", entity_id=finding.id, limit=5
+            db, initiative.engagement_id, entity_type="finding", entity_id=finding.id, limit=5,
+            include_internal=can_see_internal(user),
         )
         finding_activity.extend(items)
     activity = sorted(own_activity + finding_activity, key=lambda a: a.created_at, reverse=True)[:20]

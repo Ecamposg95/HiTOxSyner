@@ -8,6 +8,7 @@ from app.crud import initiatives as initiatives_crud
 from app.crud import milestones as milestones_crud
 from app.models.engagement import Engagement
 from app.models.enums import RoadmapPhase
+from app.models.user import User
 from app.schemas.action import ActionRead
 from app.schemas.activity import ActivityRead
 from app.schemas.dashboard import DashboardRead, DashboardTiles, RoadmapPhaseRead
@@ -16,6 +17,7 @@ from app.schemas.engagement import EngagementRead
 from app.schemas.finding import FindingRead
 from app.schemas.initiative import InitiativeRead
 from app.schemas.milestone import MilestoneRead
+from app.services.documents import can_see_internal
 
 
 def build_roadmap(db: Session, engagement: Engagement) -> list[RoadmapPhaseRead]:
@@ -25,7 +27,7 @@ def build_roadmap(db: Session, engagement: Engagement) -> list[RoadmapPhaseRead]
     return [RoadmapPhaseRead(phase=phase.value, milestones=items) for phase, items in by_phase.items()]
 
 
-def build_dashboard(db: Session, engagement: Engagement) -> DashboardRead:
+def build_dashboard(db: Session, engagement: Engagement, user: User) -> DashboardRead:
     tiles = DashboardTiles(
         health=engagement.health,
         progress_pct=engagement.progress_pct,
@@ -40,7 +42,7 @@ def build_dashboard(db: Session, engagement: Engagement) -> DashboardRead:
         active_initiatives=[InitiativeRead.model_validate(i) for i in initiatives_crud.active(db, engagement.id)],
         key_findings=[FindingRead.model_validate(f) for f in findings_crud.key_findings(db, engagement.id)],
         next_actions=[ActionRead.model_validate(a) for a in actions_crud.next_open(db, engagement.id)],
-        recent_activity=[ActivityRead.model_validate(a) for a in activities_crud.recent(db, engagement.id, limit=15)],
+        recent_activity=[ActivityRead.model_validate(a) for a in activities_crud.recent(db, engagement.id, limit=15, include_internal=can_see_internal(user))],
         roadmap=build_roadmap(db, engagement),
         decisions_required=[DecisionRead.model_validate(d) for d in decisions_crud.required(db, engagement.id)],
         next_milestones=[MilestoneRead.model_validate(m) for m in milestones_crud.upcoming(db, engagement.id)],

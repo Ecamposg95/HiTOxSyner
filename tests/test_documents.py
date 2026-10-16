@@ -89,3 +89,21 @@ def test_documents_filter_by_category_and_are_isolated(client, world):
     assert client.get(base, headers=login(client, "exec@a.example")).json()["total"] == 2
     assert client.get(f"/api/documents/{created['id']}", headers=login(client, "exec@b.example")).status_code == 404
     assert client.get(base, headers=login(client, "collab@b.example")).status_code == 404
+
+
+def test_internal_document_activity_is_hidden_from_collaborators(client, world):
+    admin, initiative = _admin_and_initiative(client, world)
+    base = f"/api/engagements/{world.eng_a.id}/documents"
+    internal = client.post(base, headers=admin, json={**DOCUMENT, "name": "Notas internas Syner", "internal_only": True}).json()
+    client.post(f"/api/documents/{internal['id']}/links", headers=admin, json={"entity_type": "initiative", "entity_id": initiative["id"]})
+    client.post(base, headers=admin, json=DOCUMENT)
+    collab = login(client, "collab@a.example")
+    feed = client.get(f"/api/engagements/{world.eng_a.id}/activity", headers=collab).json()
+    assert not any("Notas internas" in a["summary"] for a in feed["items"])
+    assert any(a["summary"] == f'Syner Admin created Document "{DOCUMENT["name"]}"' for a in feed["items"])
+    dashboard = client.get(f"/api/engagements/{world.eng_a.id}/dashboard", headers=collab).json()
+    assert not any("Notas internas" in a["summary"] for a in dashboard["recent_activity"])
+    exec_feed = client.get(f"/api/engagements/{world.eng_a.id}/activity", headers=login(client, "exec@a.example")).json()
+    assert any("Notas internas" in a["summary"] for a in exec_feed["items"])
+    # hidden rows: created internal Document + linked internal Document
+    assert feed["total"] == exec_feed["total"] - 2

@@ -28,6 +28,7 @@ def create_document(db: Session, *, user: User, engagement: Engagement, data: Do
     log_activity(
         db, user=user, engagement=engagement, action=ActivityAction.CREATED, entity_type="document",
         entity_id=document.id, summary=f'{user.full_name} created Document "{document.name}"',
+        internal_only=document.internal_only,
     )
     db.commit()
     db.refresh(document)
@@ -45,6 +46,7 @@ def update_document(db: Session, *, user: User, document: Document, data: Docume
     log_activity(
         db, user=user, engagement=engagement, action=ActivityAction.UPDATED, entity_type="document",
         entity_id=document.id, summary=f'{user.full_name} updated Document "{document.name}"', changes=changes,
+        internal_only=document.internal_only,
     )
     db.commit()
     db.refresh(document)
@@ -64,6 +66,7 @@ def add_link(db: Session, *, user: User, document: Document, data: DocumentLinkC
         entity_id=document.id,
         summary=f'{user.full_name} linked Document "{document.name}" to {entity_label(data.entity_type)} "{title}"',
         changes=[{"field": "links", "before": None, "after": f"{data.entity_type}:{data.entity_id}"}],
+        internal_only=document.internal_only,
     )
     db.commit()
     db.refresh(link)
@@ -80,5 +83,6 @@ def remove_link(db: Session, *, user: User, document: Document, link_id: uuid.UU
         db, user=user, engagement=engagement, action=ActivityAction.UPDATED, entity_type="document",
         entity_id=document.id, summary=f'{user.full_name} unlinked Document "{document.name}" from {entity_label(link.entity_type)}',
         changes=[{"field": "links", "before": f"{link.entity_type}:{link.entity_id}", "after": None}],
+        internal_only=document.internal_only,
     )
     db.commit()

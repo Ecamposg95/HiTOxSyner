@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, ForeignKey, String, Uuid, func
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -22,4 +22,5 @@ class Activity(Base):
     entity_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     summary: Mapped[str] = mapped_column(String(500), nullable=False)
     changes: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    internal_only: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

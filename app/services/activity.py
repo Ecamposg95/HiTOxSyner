@@ -33,6 +33,7 @@ def diff_changes(entity, payload: dict) -> list[dict]:
 def log_activity(
     db: Session, *, user: User, engagement: Engagement, action: ActivityAction,
     entity_type: str, entity_id: uuid.UUID, summary: str, changes: list[dict] | None = None,
+    internal_only: bool = False,
 ) -> Activity:
     activity = Activity(
         organization_id=engagement.organization_id,
@@ -44,6 +45,7 @@ def log_activity(
         entity_id=entity_id,
         summary=summary[:500],
         changes=changes or [],
+        internal_only=internal_only,
     )
     db.add(activity)
     db.flush()
