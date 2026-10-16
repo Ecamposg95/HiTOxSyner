@@ -1,5 +1,6 @@
 from app.models.activity import Activity
 from app.models.action import Action
+from app.models.comment import Comment
 from app.models.decision import Decision
 from app.models.engagement import Engagement
 from app.models.initiative import Initiative
@@ -9,4 +10,4 @@ from app.models.milestone import Milestone
 from app.models.organization import Organization
 from app.models.user import User
 
-__all__ = ["Action", "Activity", "Decision", "Engagement", "Finding", "Initiative", "Meeting", "Milestone", "Organization", "User"]
+__all__ = ["Action", "Activity", "Comment", "Decision", "Engagement", "Finding", "Initiative", "Meeting", "Milestone", "Organization", "User"]
