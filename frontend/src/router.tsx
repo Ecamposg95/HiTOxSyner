@@ -1,13 +1,15 @@
-import { DecisionsPage } from "./pages/DecisionsPage";
 import { useCallback, useEffect, useState } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ActionsPage } from "./pages/ActionsPage";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
+import { DecisionsPage } from "./pages/DecisionsPage";
 import { FindingsPage } from "./pages/FindingsPage";
 import { InitiativesPage } from "./pages/InitiativesPage";
 import { InitiativeDetailPage } from "./pages/InitiativeDetailPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { MeetingsPage } from "./pages/MeetingsPage";
+import { MeetingDetailPage } from "./pages/MeetingDetailPage";
 import { RoadmapPage } from "./pages/RoadmapPage";
 import { LoginPage } from "./pages/LoginPage";
 import { useAuthStore } from "./stores/auth";
@@ -54,7 +56,8 @@ export const router = createBrowserRouter([
           { path: "/actions", element: <ActionsPage /> },
           { path: "/actions/mine", element: <ActionsPage mine /> },
           { path: "/decisions", element: <DecisionsPage /> },
-          { path: "/meetings", element: <ComingSoonPage title="Meetings" /> },
+          { path: "/meetings", element: <MeetingsPage /> },
+          { path: "/meetings/:id", element: <MeetingDetailPage /> },
           { path: "/documents", element: <ComingSoonPage title="Documents" /> },
           { path: "/lab", element: <ComingSoonPage title="Leadership Lab" /> },
           { path: "*", element: <Navigate to="/" replace /> },
