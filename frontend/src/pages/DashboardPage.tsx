@@ -127,7 +127,16 @@ export function DashboardPage() {
         <Section title="Decisions Required">
           {data.decisions_required.length === 0 ? (
             <p className="text-sm text-muted">Sin decisiones pendientes de aprobación.</p>
-          ) : null}
+          ) : (
+            <ul className="space-y-2">
+              {data.decisions_required.map((d) => (
+                <li key={d.id} className="flex items-start justify-between gap-3 text-sm">
+                  <Link to="/decisions" className="hover:underline">{d.title}<span className="block text-xs text-muted">{d.owner_name || "Sin owner"}</span></Link>
+                  <StatusBadge value={d.status} />
+                </li>
+              ))}
+            </ul>
+          )}
         </Section>
 
         <Section title="Key Findings">

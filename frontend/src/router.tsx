@@ -1,3 +1,4 @@
+import { DecisionsPage } from "./pages/DecisionsPage";
 import { useCallback, useEffect, useState } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
@@ -52,7 +53,7 @@ export const router = createBrowserRouter([
           { path: "/roadmap", element: <RoadmapPage /> },
           { path: "/actions", element: <ActionsPage /> },
           { path: "/actions/mine", element: <ActionsPage mine /> },
-          { path: "/decisions", element: <ComingSoonPage title="Decisions" /> },
+          { path: "/decisions", element: <DecisionsPage /> },
           { path: "/meetings", element: <ComingSoonPage title="Meetings" /> },
           { path: "/documents", element: <ComingSoonPage title="Documents" /> },
           { path: "/lab", element: <ComingSoonPage title="Leadership Lab" /> },
