@@ -37,7 +37,7 @@ def test_client_roles_cannot_write_documents(client, world):
         assert client.post(f"/api/documents/{created['id']}/links", headers=headers, json={"entity_type": "initiative", "entity_id": str(uuid.uuid4())}).status_code == 403
 
 
-def test_internal_only_documents_are_hidden_from_collaborators(client, world):
+def test_internal_only_documents_are_visible_only_to_syner(client, world):
     admin, initiative = _admin_and_initiative(client, world)
     base = f"/api/engagements/{world.eng_a.id}/documents"
     public = client.post(base, headers=admin, json=DOCUMENT).json()
@@ -52,9 +52,12 @@ def test_internal_only_documents_are_hidden_from_collaborators(client, world):
     detail = client.get(f"/api/initiatives/{initiative['id']}/detail", headers=collab).json()
     assert [d["name"] for d in detail["documents"]] == [DOCUMENT["name"]]
     exec_a = login(client, "exec@a.example")
-    assert client.get(base, headers=exec_a).json()["total"] == 2
-    assert client.get(f"/api/documents/{internal['id']}", headers=exec_a).status_code == 200
-    assert len(client.get(f"/api/initiatives/{initiative['id']}/detail", headers=exec_a).json()["documents"]) == 2
+    assert client.get(base, headers=exec_a).json()["total"] == 1
+    assert client.get(f"/api/documents/{internal['id']}", headers=exec_a).status_code == 404
+    assert [d["name"] for d in client.get(f"/api/initiatives/{initiative['id']}/detail", headers=exec_a).json()["documents"]] == [DOCUMENT["name"]]
+    assert client.get(base, headers=admin).json()["total"] == 2
+    assert client.get(f"/api/documents/{internal['id']}", headers=admin).status_code == 200
+    assert len(client.get(f"/api/initiatives/{initiative['id']}/detail", headers=admin).json()["documents"]) == 2
 
 
 def test_links_are_unique_validated_and_removable(client, world):
@@ -104,6 +107,24 @@ def test_internal_document_activity_is_hidden_from_collaborators(client, world):
     dashboard = client.get(f"/api/engagements/{world.eng_a.id}/dashboard", headers=collab).json()
     assert not any("Notas internas" in a["summary"] for a in dashboard["recent_activity"])
     exec_feed = client.get(f"/api/engagements/{world.eng_a.id}/activity", headers=login(client, "exec@a.example")).json()
-    assert any("Notas internas" in a["summary"] for a in exec_feed["items"])
+    assert not any("Notas internas" in a["summary"] for a in exec_feed["items"])
+    admin_feed = client.get(f"/api/engagements/{world.eng_a.id}/activity", headers=login(client, "admin@syner.example")).json()
+    assert any("Notas internas" in a["summary"] for a in admin_feed["items"])
     # hidden rows: created internal Document + linked internal Document
-    assert feed["total"] == exec_feed["total"] - 2
+    assert feed["total"] == admin_feed["total"] - 2
+    assert exec_feed["total"] == admin_feed["total"] - 2
+
+
+def test_toggling_internal_only_rewrites_activity_visibility(client, world):
+    admin, initiative = _admin_and_initiative(client, world)
+    base = f"/api/engagements/{world.eng_a.id}/documents"
+    doc = client.post(base, headers=admin, json={**DOCUMENT, "name": "Antes público"}).json()
+    client.post(f"/api/documents/{doc['id']}/links", headers=admin, json={"entity_type": "initiative", "entity_id": initiative["id"]})
+    collab = login(client, "collab@a.example")
+    assert any("Antes público" in a["summary"] for a in client.get(f"/api/engagements/{world.eng_a.id}/activity", headers=collab).json()["items"])
+    assert client.patch(f"/api/documents/{doc['id']}", headers=admin, json={"internal_only": True}).status_code == 200
+    feed = client.get(f"/api/engagements/{world.eng_a.id}/activity", headers=collab).json()
+    assert not any("Antes público" in a["summary"] for a in feed["items"])
+    assert client.get(f"/api/documents/{doc['id']}", headers=collab).status_code == 404
+    assert client.patch(f"/api/documents/{doc['id']}", headers=admin, json={"internal_only": False}).status_code == 200
+    assert any("Antes público" in a["summary"] for a in client.get(f"/api/engagements/{world.eng_a.id}/activity", headers=collab).json()["items"])

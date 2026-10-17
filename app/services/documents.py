@@ -1,9 +1,11 @@
 import uuid
 
 from fastapi import HTTPException
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.crud import documents as documents_crud
+from app.models.activity import Activity
 from app.models.document import Document, DocumentLink
 from app.models.engagement import Engagement
 from app.models.enums import ActivityAction, Role
@@ -15,7 +17,7 @@ from app.services.entities import entity_label, resolve_entity
 
 
 def can_see_internal(user: User) -> bool:
-    return user.role != Role.HITO_COLLABORATOR
+    return user.role == Role.SYNER_ADMIN
 
 
 def create_document(db: Session, *, user: User, engagement: Engagement, data: DocumentCreate) -> Document:
@@ -42,6 +44,12 @@ def update_document(db: Session, *, user: User, document: Document, data: Docume
         return document
     for field, value in payload.items():
         setattr(document, field, value)
+    if "internal_only" in payload:
+        db.execute(
+            update(Activity)
+            .where(Activity.entity_type == "document", Activity.entity_id == document.id)
+            .values(internal_only=document.internal_only)
+        )
     engagement = db.get(Engagement, document.engagement_id)
     log_activity(
         db, user=user, engagement=engagement, action=ActivityAction.UPDATED, entity_type="document",

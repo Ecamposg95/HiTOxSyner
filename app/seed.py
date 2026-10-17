@@ -109,11 +109,18 @@ def _seed_delivery(db: Session, admin: User, collab: User, engagement: Engagemen
     db.commit()
 
 
+def _is_demo_engagement(initiatives: list[Initiative]) -> bool:
+    return len(initiatives) >= 4 and all(i.name.startswith("[Demo]") for i in initiatives)
+
+
 def _seed_client_room(db: Session, admin: User, collab: User, engagement: Engagement) -> None:
     """Milestones, meetings, decisions, documents y comments del plan 2."""
     today = date.today()
     now = datetime.now(timezone.utc)
     initiatives = _initiatives(db, engagement)
+    if not _is_demo_engagement(initiatives):
+        print("Seed: el engagement no contiene el set demo de initiatives; se omiten los datos demo del client room.")
+        return
 
     if not _has_rows(db, Milestone, engagement):
         milestones_data = [

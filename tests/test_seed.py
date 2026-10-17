@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 
 from app.models.action import Action
 from app.models.comment import Comment
@@ -34,3 +34,14 @@ def test_seed_is_idempotent_and_creates_demo_data(db, client):
     assert db.scalar(select(func.count()).select_from(Document).where(Document.internal_only.is_(True))) == 1
     response = client.post("/api/auth/login", json={"email": "admin@syner.demo", "password": "syner-demo"})
     assert response.status_code == 200
+
+
+def test_seed_skips_client_room_when_engagement_has_real_initiatives(db, client):
+    seed(db)
+    real = db.scalar(select(Initiative).order_by(Initiative.created_at))
+    real.name = "Iniciativa real del cliente"
+    db.execute(delete(Milestone))
+    db.commit()
+    seed(db)
+    assert _count(db, Milestone) == 0
+    assert _count(db, Meeting) == 3

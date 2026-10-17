@@ -17,7 +17,8 @@ from app.services import decisions as decisions_service
 router = APIRouter(tags=["decisions"])
 syner_only = Depends(require_roles(Role.SYNER_ADMIN))
 scoped_decision = Depends(scoped(Decision, "decision_id"))
-FORBIDDEN = HTTPException(status_code=403, detail="No tienes permisos para esta acción")
+def forbidden() -> HTTPException:
+    return HTTPException(status_code=403, detail="No tienes permisos para esta acción")
 
 
 @router.get("/engagements/{engagement_id}/decisions", response_model=Page[DecisionRead])
@@ -61,7 +62,7 @@ def update_decision(
     if user.role == Role.HITO_EXECUTIVE:
         sent = data.model_dump(exclude_unset=True)
         if set(sent) != {"status"} or sent["status"] not in RESOLUTION_STATUSES:
-            raise FORBIDDEN
+            raise forbidden()
     elif user.role != Role.SYNER_ADMIN:
-        raise FORBIDDEN
+        raise forbidden()
     return decisions_service.update_decision(db, user=user, decision=decision, data=data)
