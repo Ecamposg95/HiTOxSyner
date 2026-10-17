@@ -10,3 +10,19 @@ export function formatDateTime(value: string | null | undefined): string {
   if (!value) return "—";
   return dateTimeFormatter.format(new Date(value));
 }
+
+function pad(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+/** ISO (UTC) → valor para <input type="datetime-local"> en hora local. */
+export function toDateTimeInput(value: string | null | undefined): string {
+  if (!value) return "";
+  const d = new Date(value);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Valor de <input type="datetime-local"> → ISO UTC para la API. */
+export function fromDateTimeInput(value: string): string {
+  return new Date(value).toISOString();
+}

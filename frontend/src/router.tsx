@@ -7,6 +7,7 @@ import { FindingsPage } from "./pages/FindingsPage";
 import { InitiativesPage } from "./pages/InitiativesPage";
 import { InitiativeDetailPage } from "./pages/InitiativeDetailPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { RoadmapPage } from "./pages/RoadmapPage";
 import { LoginPage } from "./pages/LoginPage";
 import { useAuthStore } from "./stores/auth";
 import { useEngagementStore } from "./stores/engagement";
@@ -48,7 +49,7 @@ export const router = createBrowserRouter([
           { path: "/findings", element: <FindingsPage /> },
           { path: "/initiatives", element: <InitiativesPage /> },
           { path: "/initiatives/:id", element: <InitiativeDetailPage /> },
-          { path: "/roadmap", element: <ComingSoonPage title="Roadmap" /> },
+          { path: "/roadmap", element: <RoadmapPage /> },
           { path: "/actions", element: <ActionsPage /> },
           { path: "/actions/mine", element: <ActionsPage mine /> },
           { path: "/decisions", element: <ComingSoonPage title="Decisions" /> },

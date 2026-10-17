@@ -86,6 +86,7 @@ export interface Action {
   owner_name: string;
   organization_side: "SYNER" | "CLIENT";
   initiative_id: string | null;
+  meeting_id: string | null;
   due_date: string | null;
   priority: Level;
   status: ActionStatus;
@@ -125,14 +126,113 @@ export interface Dashboard {
   key_findings: Finding[];
   next_actions: Action[];
   recent_activity: Activity[];
-  roadmap: { phase: string; milestones: unknown[] }[];
-  decisions_required: unknown[];
-  next_milestones: unknown[];
+  roadmap: { phase: RoadmapPhase; milestones: Milestone[] }[];
+  decisions_required: Decision[];
+  next_milestones: Milestone[];
 }
 
 export interface InitiativeDetail {
   initiative: Initiative;
   findings: Finding[];
+  milestones: Milestone[];
   actions: Action[];
+  decisions: Decision[];
+  documents: Document[];
   activity: Activity[];
+}
+
+export type RoadmapPhase = "Discover" | "Diagnose" | "Design" | "Prioritize" | "Execute" | "Measure";
+export type MilestoneStatus = "Planned" | "In Progress" | "Done" | "Slipped";
+
+export interface Milestone {
+  id: string;
+  engagement_id: string;
+  name: string;
+  description: string;
+  phase: RoadmapPhase;
+  due_date: string | null;
+  status: MilestoneStatus;
+  owner: string;
+  initiative_id: string | null;
+  deliverable: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type DecisionStatus = "Proposed" | "Under Review" | "Approved" | "Rejected" | "Deferred";
+
+export interface Decision {
+  id: string;
+  engagement_id: string;
+  title: string;
+  context: string;
+  alternatives: string;
+  syner_recommendation: string;
+  final_decision: string;
+  owner_name: string;
+  participants: string;
+  decided_on: string | null;
+  impact: string;
+  status: DecisionStatus;
+  initiative_id: string | null;
+  meeting_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Meeting {
+  id: string;
+  engagement_id: string;
+  title: string;
+  held_on: string;
+  participants: string;
+  objective: string;
+  summary: string;
+  discussion: string;
+  next_steps: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MeetingDetail {
+  meeting: Meeting;
+  decisions: Decision[];
+  actions: Action[];
+}
+
+export type DocumentCategory = "Discovery" | "Assessment" | "Strategy" | "Process" | "Technology" | "Data" | "AI" | "Reports" | "Meetings" | "Deliverables" | "Evidence";
+
+export interface DocumentLink {
+  id: string;
+  document_id: string;
+  entity_type: string;
+  entity_id: string;
+}
+
+export interface Document {
+  id: string;
+  engagement_id: string;
+  name: string;
+  description: string;
+  category: DocumentCategory;
+  version: string;
+  url: string;
+  doc_date: string | null;
+  uploader_id: string | null;
+  tags: string[];
+  internal_only: boolean;
+  links: DocumentLink[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Comment {
+  id: string;
+  engagement_id: string;
+  entity_type: string;
+  entity_id: string;
+  author_id: string | null;
+  author_name: string;
+  body: string;
+  created_at: string;
 }

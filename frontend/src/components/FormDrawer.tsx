@@ -1,6 +1,6 @@
 import type { FormEvent, ReactNode } from "react";
 
-export function FormDrawer({ open, title, onClose, onSubmit, submitting, error, children, footer }: {
+export function FormDrawer({ open, title, onClose, onSubmit, submitting, error, children, footer, hideSubmit }: {
   open: boolean;
   title: string;
   onClose: () => void;
@@ -9,6 +9,7 @@ export function FormDrawer({ open, title, onClose, onSubmit, submitting, error, 
   error?: string | null;
   children: ReactNode;
   footer?: ReactNode;
+  hideSubmit?: boolean;
 }) {
   if (!open) return null;
   return (
@@ -24,7 +25,7 @@ export function FormDrawer({ open, title, onClose, onSubmit, submitting, error, 
           <div className="text-sm text-danger">{error}</div>
           <div className="flex gap-2">
             {footer}
-            <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? "Guardando…" : "Guardar"}</button>
+            {!hideSubmit && <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? "Guardando…" : "Guardar"}</button>}
           </div>
         </div>
       </form>
