@@ -26,6 +26,7 @@ def list_actions(
     status: ActionStatus | None = None,
     initiative_id: uuid.UUID | None = None,
     owner_user_id: uuid.UUID | None = None,
+    meeting_id: uuid.UUID | None = None,
     mine: bool = False,
     pagination: Pagination = Depends(pagination_params),
     db: Session = Depends(get_db),
@@ -34,6 +35,7 @@ def list_actions(
         owner_user_id = user.id
     items, total = actions_crud.list_for_engagement(
         db, engagement.id, status=status, initiative_id=initiative_id, owner_user_id=owner_user_id,
+        meeting_id=meeting_id,
         limit=pagination.limit, offset=pagination.offset,
     )
     return Page(items=items, total=total)

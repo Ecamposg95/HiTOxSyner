@@ -89,3 +89,36 @@ class RoadmapPhase(str, enum.Enum):
     PRIORITIZE = "Prioritize"
     EXECUTE = "Execute"
     MEASURE = "Measure"
+
+
+class MilestoneStatus(str, enum.Enum):
+    PLANNED = "Planned"
+    IN_PROGRESS = "In Progress"
+    DONE = "Done"
+    SLIPPED = "Slipped"
+
+
+class DecisionStatus(str, enum.Enum):
+    PROPOSED = "Proposed"
+    UNDER_REVIEW = "Under Review"
+    APPROVED = "Approved"
+    REJECTED = "Rejected"
+    DEFERRED = "Deferred"
+
+
+RESOLUTION_STATUSES = (DecisionStatus.APPROVED, DecisionStatus.REJECTED, DecisionStatus.DEFERRED)
+PENDING_DECISION_STATUSES = (DecisionStatus.PROPOSED, DecisionStatus.UNDER_REVIEW)
+
+
+class DocumentCategory(str, enum.Enum):
+    DISCOVERY = "Discovery"
+    ASSESSMENT = "Assessment"
+    STRATEGY = "Strategy"
+    PROCESS = "Process"
+    TECHNOLOGY = "Technology"
+    DATA = "Data"
+    AI = "AI"
+    REPORTS = "Reports"
+    MEETINGS = "Meetings"
+    DELIVERABLES = "Deliverables"
+    EVIDENCE = "Evidence"

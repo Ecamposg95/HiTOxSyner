@@ -3,10 +3,15 @@ import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ActionsPage } from "./pages/ActionsPage";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
+import { DecisionsPage } from "./pages/DecisionsPage";
+import { DocumentsPage } from "./pages/DocumentsPage";
 import { FindingsPage } from "./pages/FindingsPage";
 import { InitiativesPage } from "./pages/InitiativesPage";
 import { InitiativeDetailPage } from "./pages/InitiativeDetailPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { MeetingsPage } from "./pages/MeetingsPage";
+import { MeetingDetailPage } from "./pages/MeetingDetailPage";
+import { RoadmapPage } from "./pages/RoadmapPage";
 import { LoginPage } from "./pages/LoginPage";
 import { useAuthStore } from "./stores/auth";
 import { useEngagementStore } from "./stores/engagement";
@@ -48,12 +53,13 @@ export const router = createBrowserRouter([
           { path: "/findings", element: <FindingsPage /> },
           { path: "/initiatives", element: <InitiativesPage /> },
           { path: "/initiatives/:id", element: <InitiativeDetailPage /> },
-          { path: "/roadmap", element: <ComingSoonPage title="Roadmap" /> },
+          { path: "/roadmap", element: <RoadmapPage /> },
           { path: "/actions", element: <ActionsPage /> },
           { path: "/actions/mine", element: <ActionsPage mine /> },
-          { path: "/decisions", element: <ComingSoonPage title="Decisions" /> },
-          { path: "/meetings", element: <ComingSoonPage title="Meetings" /> },
-          { path: "/documents", element: <ComingSoonPage title="Documents" /> },
+          { path: "/decisions", element: <DecisionsPage /> },
+          { path: "/meetings", element: <MeetingsPage /> },
+          { path: "/meetings/:id", element: <MeetingDetailPage /> },
+          { path: "/documents", element: <DocumentsPage /> },
           { path: "/lab", element: <ComingSoonPage title="Leadership Lab" /> },
           { path: "*", element: <Navigate to="/" replace /> },
         ],

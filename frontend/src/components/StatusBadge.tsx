@@ -9,6 +9,13 @@ const TONES: Record<string, string> = {
   Closed: "bg-gray-100 text-gray-700 border-gray-200",
   Cancelled: "bg-gray-100 text-gray-700 border-gray-200",
   "On Hold": "bg-gray-100 text-gray-700 border-gray-200",
+  Done: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  Approved: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  Slipped: "bg-red-50 text-red-800 border-red-200",
+  Rejected: "bg-red-50 text-red-800 border-red-200",
+  "Under Review": "bg-amber-50 text-amber-800 border-amber-200",
+  Deferred: "bg-gray-100 text-gray-700 border-gray-200",
+  Interno: "bg-amber-50 text-amber-800 border-amber-200",
 };
 
 export function StatusBadge({ value }: { value: string }) {

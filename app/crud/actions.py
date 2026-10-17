@@ -12,7 +12,7 @@ OPEN_STATUSES = (ActionStatus.OPEN, ActionStatus.IN_PROGRESS, ActionStatus.BLOCK
 def list_for_engagement(
     db: Session, engagement_id: uuid.UUID, *, status: ActionStatus | None = None,
     initiative_id: uuid.UUID | None = None, owner_user_id: uuid.UUID | None = None,
-    limit: int = 50, offset: int = 0,
+    meeting_id: uuid.UUID | None = None, limit: int = 50, offset: int = 0,
 ) -> tuple[list[Action], int]:
     query = select(Action).where(Action.engagement_id == engagement_id)
     if status:
@@ -21,6 +21,8 @@ def list_for_engagement(
         query = query.where(Action.initiative_id == initiative_id)
     if owner_user_id:
         query = query.where(Action.owner_user_id == owner_user_id)
+    if meeting_id:
+        query = query.where(Action.meeting_id == meeting_id)
     total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
     items = list(db.scalars(query.order_by(Action.due_date.nulls_last(), Action.created_at.desc()).limit(limit).offset(offset)))
     return items, total
@@ -41,3 +43,7 @@ def next_open(db: Session, engagement_id: uuid.UUID, limit: int = 5) -> list[Act
 
 def list_by_initiative(db: Session, initiative_id: uuid.UUID) -> list[Action]:
     return list(db.scalars(select(Action).where(Action.initiative_id == initiative_id).order_by(Action.due_date.nulls_last())))
+
+
+def list_by_meeting(db: Session, meeting_id: uuid.UUID) -> list[Action]:
+    return list(db.scalars(select(Action).where(Action.meeting_id == meeting_id).order_by(Action.due_date.nulls_last(), Action.created_at)))

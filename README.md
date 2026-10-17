@@ -7,7 +7,7 @@ Workspace privado de advisory para el engagement de Grupo Syner con HiTO. API Fa
 1. `python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt`
 2. Copiar `.env.example` a `.env` y definir `DATABASE_URL`, `TEST_DATABASE_URL` y `JWT_SECRET` (Postgres obligatorio).
 3. `alembic upgrade head`
-4. `python -m app.seed` (usuarios demo: `admin@syner.demo`, `exec@hito.demo`, `collab@hito.demo`; passwords desde `SEED_*_PASSWORD`).
+4. `python -m app.seed` (usuarios demo: `admin@syner.demo`, `exec@hito.demo`, `collab@hito.demo`; passwords desde `SEED_*_PASSWORD`). Crea datos `[Demo]` para findings, initiatives, actions, milestones, meetings, decisions, documents y comments; es idempotente por módulo y solo añade datos demo cuando el engagement contiene las 4 initiatives `[Demo]`; en un engagement con datos reales no toca nada.
 5. `uvicorn app.main:app --reload` → API en `http://localhost:8000/api`, docs en `/api/docs`.
 6. Frontend: `cd frontend && npm install && npm run dev` → `http://localhost:5173` con proxy a `/api`.
 

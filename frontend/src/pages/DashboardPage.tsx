@@ -85,12 +85,20 @@ export function DashboardPage() {
 
       <Section title="Transformation Roadmap">
         <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
-          {data.roadmap.map((phase) => (
-            <div key={phase.phase} className="rounded border border-line px-3 py-2">
-              <div className="text-sm font-medium">{phase.phase}</div>
-              <div className="text-xs text-muted">{phase.milestones.length} milestones</div>
-            </div>
-          ))}
+          {data.roadmap.map((phase) => {
+            const done = phase.milestones.filter((m) => m.status === "Done").length;
+            return (
+              <Link key={phase.phase} to="/roadmap" className="rounded border border-line px-3 py-2 hover:bg-canvas">
+                <div className="text-sm font-medium">{phase.phase}</div>
+                <div className="text-xs tabular-nums text-muted">{done}/{phase.milestones.length} milestones</div>
+                <ul className="mt-1 space-y-0.5">
+                  {phase.milestones.slice(0, 3).map((m) => (
+                    <li key={m.id} className="truncate text-xs" title={m.name}>{m.name}</li>
+                  ))}
+                </ul>
+              </Link>
+            );
+          })}
         </div>
       </Section>
 
@@ -119,7 +127,16 @@ export function DashboardPage() {
         <Section title="Decisions Required">
           {data.decisions_required.length === 0 ? (
             <p className="text-sm text-muted">Sin decisiones pendientes de aprobación.</p>
-          ) : null}
+          ) : (
+            <ul className="space-y-2">
+              {data.decisions_required.map((d) => (
+                <li key={d.id} className="flex items-start justify-between gap-3 text-sm">
+                  <Link to="/decisions" className="hover:underline">{d.title}<span className="block text-xs text-muted">{d.owner_name || "Sin owner"}</span></Link>
+                  <StatusBadge value={d.status} />
+                </li>
+              ))}
+            </ul>
+          )}
         </Section>
 
         <Section title="Key Findings">
@@ -168,7 +185,16 @@ export function DashboardPage() {
         </Section>
 
         <Section title="Next Milestones">
-          {data.next_milestones.length === 0 ? <p className="text-sm text-muted">Sin milestones programados.</p> : null}
+          {data.next_milestones.length === 0 ? <p className="text-sm text-muted">Sin milestones programados.</p> : (
+            <ul className="space-y-2">
+              {data.next_milestones.map((m) => (
+                <li key={m.id} className="flex items-start justify-between gap-3 text-sm">
+                  <span>{m.name}<span className="block text-xs text-muted">{m.phase}</span></span>
+                  <span className="flex items-center gap-2 text-xs tabular-nums text-muted">{formatDate(m.due_date)}<StatusBadge value={m.status} /></span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Section>
       </div>
     </div>

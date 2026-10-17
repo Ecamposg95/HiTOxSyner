@@ -24,3 +24,10 @@ export const INITIATIVE_STATUSES = ["Discovery", "Design", "Validation", "Execut
 export const ACTION_STATUSES = ["Open", "In Progress", "Blocked", "Completed", "Cancelled"] as const;
 export const LEVELS = ["Low", "Medium", "High", "Critical"] as const;
 export const HEALTHS = ["On Track", "Attention", "At Risk"] as const;
+
+export const ROADMAP_PHASES = ["Discover", "Diagnose", "Design", "Prioritize", "Execute", "Measure"] as const;
+export const MILESTONE_STATUSES = ["Planned", "In Progress", "Done", "Slipped"] as const;
+export const DECISION_STATUSES = ["Proposed", "Under Review", "Approved", "Rejected", "Deferred"] as const;
+export const RESOLUTION_STATUSES = ["Approved", "Rejected", "Deferred"] as const;
+export const DOCUMENT_CATEGORIES = ["Discovery", "Assessment", "Strategy", "Process", "Technology", "Data", "AI", "Reports", "Meetings", "Deliverables", "Evidence"] as const;
+export const ENTITY_LABELS: Record<string, string> = { finding: "Finding", initiative: "Initiative", meeting: "Meeting", decision: "Decision", action: "Action" };

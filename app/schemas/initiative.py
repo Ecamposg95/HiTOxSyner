@@ -6,7 +6,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.models.enums import InitiativeStatus, Level
 from app.schemas.action import ActionRead
 from app.schemas.activity import ActivityRead
+from app.schemas.decision import DecisionRead
+from app.schemas.document import DocumentRead
 from app.schemas.finding import FindingRead
+from app.schemas.milestone import MilestoneRead
 
 
 class InitiativeCreate(BaseModel):
@@ -76,5 +79,8 @@ class InitiativeRead(BaseModel):
 class InitiativeDetail(BaseModel):
     initiative: InitiativeRead
     findings: list[FindingRead]
+    milestones: list[MilestoneRead]
     actions: list[ActionRead]
+    decisions: list[DecisionRead]
+    documents: list[DocumentRead]
     activity: list[ActivityRead]
