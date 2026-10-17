@@ -7,6 +7,7 @@ import { engagementsApi } from "../api/engagements";
 import { initiativesApi } from "../api/initiatives";
 import { meetingsApi, MeetingInput } from "../api/meetings";
 import { ActionForm, EMPTY_ACTION } from "../components/ActionForm";
+import { Comments } from "../components/Comments";
 import { DecisionForm, EMPTY_DECISION } from "../components/DecisionForm";
 import { EmptyState } from "../components/EmptyState";
 import { FormDrawer } from "../components/FormDrawer";
@@ -121,6 +122,7 @@ export function MeetingDetailPage() {
           )}
         </Block>
         <Block title="Next Steps"><Prose text={m.next_steps} /></Block>
+        <Comments entityType="meeting" entityId={id} />
       </div>
 
       <FormDrawer open={drawer !== "none"} title={titles[drawer]} onClose={() => setDrawer("none")} onSubmit={submit} submitting={busy} error={formError}>
