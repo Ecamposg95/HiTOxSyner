@@ -4,6 +4,7 @@ import { AppShell } from "./components/AppShell";
 import { ActionsPage } from "./pages/ActionsPage";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { DecisionsPage } from "./pages/DecisionsPage";
+import { DocumentsPage } from "./pages/DocumentsPage";
 import { FindingsPage } from "./pages/FindingsPage";
 import { InitiativesPage } from "./pages/InitiativesPage";
 import { InitiativeDetailPage } from "./pages/InitiativeDetailPage";
@@ -58,7 +59,7 @@ export const router = createBrowserRouter([
           { path: "/decisions", element: <DecisionsPage /> },
           { path: "/meetings", element: <MeetingsPage /> },
           { path: "/meetings/:id", element: <MeetingDetailPage /> },
-          { path: "/documents", element: <ComingSoonPage title="Documents" /> },
+          { path: "/documents", element: <DocumentsPage /> },
           { path: "/lab", element: <ComingSoonPage title="Leadership Lab" /> },
           { path: "*", element: <Navigate to="/" replace /> },
         ],
