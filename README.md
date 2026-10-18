@@ -17,6 +17,16 @@ En este entorno Postgres 16 corre en espacio de usuario: binarios en `~/.local/p
 Si está detenido: `~/.local/pg/bin/pg_ctl -D ~/.local/pgdata -l ~/.local/pgdata/server.log -o "-p 5432 -k /tmp" start`.
 Rol `hitoxsyner` / password `hitoxsyner` con CREATEDB; bases `hitoxsyner_dev` (desarrollo) y `hitoxsyner_test` (tests).
 
+## Leadership Lab
+
+Módulo propio del Executive Leadership Lab (sesiones, pods, participantes, CTA tracker y Leadership Action Contracts) bajo `/api/engagements/{id}/lab/*` y la página `/lab`.
+
+- SYNER_ADMIN administra todo. Los participantes son registros sin login.
+- HITO_EXECUTIVE solo ve `GET /lab/summary` (calendario, asistencia y agregados de CTAs por status, sesión y pod) y la tarjeta Leadership Lab del dashboard. Nunca recibe nombres de participantes ni textos de CTAs.
+- HITO_COLLABORATOR no ve el módulo; el backend responde 403.
+- Toda la actividad del Lab se registra con `internal_only=true` y solo aparece en el activity trail de Syner.
+- Los PDFs de Project ORION en `docs/` se registran con el seed como Documents internos (categoría Deliverables); el primer release no almacena archivos, solo su ficha.
+
 ## Tests
 
 `pytest` usa `TEST_DATABASE_URL`, crea el esquema desde los modelos y trunca tablas entre tests.
