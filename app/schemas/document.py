@@ -2,11 +2,17 @@ import uuid
 from datetime import date, datetime
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.enums import DocumentCategory
 
 Tag = Annotated[str, Field(min_length=1, max_length=50)]
+
+
+def _check_url(value: str | None) -> str | None:
+    if value and not value.startswith(("http://", "https://")):
+        raise ValueError("url debe estar vacía o empezar por http:// o https://")
+    return value
 
 
 class DocumentCreate(BaseModel):
@@ -19,6 +25,11 @@ class DocumentCreate(BaseModel):
     tags: list[Tag] = Field(default_factory=list, max_length=20)
     internal_only: bool = False
 
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, value):
+        return _check_url(value)
+
 
 class DocumentUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=200)
@@ -29,6 +40,11 @@ class DocumentUpdate(BaseModel):
     doc_date: date | None = None
     tags: list[Tag] | None = Field(default=None, max_length=20)
     internal_only: bool | None = None
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, value):
+        return _check_url(value)
 
 
 class DocumentLinkCreate(BaseModel):

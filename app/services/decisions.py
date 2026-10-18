@@ -1,6 +1,5 @@
 from datetime import date
 
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.decision import Decision
@@ -12,19 +11,12 @@ from app.models.user import User
 from app.schemas.common import updates
 from app.schemas.decision import DecisionCreate, DecisionUpdate
 from app.services.activity import diff_changes, log_activity
+from app.services.links import require_in_engagement
 
 
 def _validate_links(db: Session, engagement: Engagement, payload: dict) -> None:
-    initiative_id = payload.get("initiative_id")
-    if initiative_id is not None:
-        initiative = db.get(Initiative, initiative_id)
-        if initiative is None or initiative.engagement_id != engagement.id:
-            raise HTTPException(status_code=422, detail="initiative_id no pertenece a este engagement")
-    meeting_id = payload.get("meeting_id")
-    if meeting_id is not None:
-        meeting = db.get(Meeting, meeting_id)
-        if meeting is None or meeting.engagement_id != engagement.id:
-            raise HTTPException(status_code=422, detail="meeting_id no pertenece a este engagement")
+    require_in_engagement(db, Initiative, payload.get("initiative_id"), engagement, "initiative_id")
+    require_in_engagement(db, Meeting, payload.get("meeting_id"), engagement, "meeting_id")
 
 
 def create_decision(db: Session, *, user: User, engagement: Engagement, data: DecisionCreate) -> Decision:

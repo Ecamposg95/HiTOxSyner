@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.crud import comments as comments_crud
@@ -11,6 +11,7 @@ from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentRead
 from app.schemas.common import Page, Pagination, pagination_params
 from app.services import comments as comments_service
+from app.services.entities import ENTITY_MODELS
 
 router = APIRouter(tags=["comments"])
 
@@ -23,6 +24,8 @@ def list_comments(
     pagination: Pagination = Depends(pagination_params),
     db: Session = Depends(get_db),
 ):
+    if entity_type not in ENTITY_MODELS:
+        raise HTTPException(status_code=422, detail=f"entity_type debe ser uno de: {', '.join(ENTITY_MODELS)}")
     items, total = comments_crud.list_for_entity(
         db, engagement.id, entity_type, entity_id, limit=pagination.limit, offset=pagination.offset
     )
