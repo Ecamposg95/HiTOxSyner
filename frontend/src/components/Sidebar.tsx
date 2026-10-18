@@ -1,7 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { NAV_ITEMS } from "../lib/labels";
+import { can } from "../lib/roles";
+import { useAuthStore } from "../stores/auth";
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const user = useAuthStore((s) => s.user);
+  const items = NAV_ITEMS.filter((item) => item.to !== "/lab" || can(user, "viewLabSummary"));
   return (
     <aside className="flex h-full w-60 flex-col border-r border-line bg-white">
       <div className="border-b border-line px-5 py-4">
@@ -9,7 +13,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <div className="mt-1 text-xs text-muted">Transformation Room</div>
       </div>
       <nav className="flex-1 space-y-0.5 px-3 py-3">
-        {NAV_ITEMS.map((item) => (
+        {items.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
