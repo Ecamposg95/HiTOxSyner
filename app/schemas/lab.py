@@ -179,3 +179,55 @@ class ActionContractRead(BaseModel):
     cta_ids: list[uuid.UUID]
     created_at: datetime
     updated_at: datetime
+
+
+class LabSessionSummary(BaseModel):
+    """Vista de sesión para dirección: calendario y asistencia, sin notas de Syner."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    number: int
+    name: str
+    theme: LabSessionTheme
+    held_on: date | None
+    status: LabSessionStatus
+    attendance_count: int | None
+
+
+class CtaStatusTotals(BaseModel):
+    committed: int = 0
+    in_progress: int = 0
+    evidenced: int = 0
+    dropped: int = 0
+    total: int = 0
+
+
+class SessionCtaBreakdown(BaseModel):
+    session_number: int
+    session_name: str
+    totals: CtaStatusTotals
+
+
+class PodCtaBreakdown(BaseModel):
+    pod_number: int
+    pod_name: str
+    totals: CtaStatusTotals
+
+
+class LabSummary(BaseModel):
+    sessions: list[LabSessionSummary]
+    sessions_done: int
+    cta_totals: CtaStatusTotals
+    evidenced_pct: int
+    by_session: list[SessionCtaBreakdown]
+    by_pod: list[PodCtaBreakdown]
+    active_contracts: int
+
+
+class LabDashboard(BaseModel):
+    next_session: LabSessionSummary | None
+    sessions_done: int
+    sessions_total: int
+    active_ctas: int
+    evidenced_pct: int
+    active_contracts: int

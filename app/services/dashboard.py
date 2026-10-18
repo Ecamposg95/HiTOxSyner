@@ -18,6 +18,7 @@ from app.schemas.finding import FindingRead
 from app.schemas.initiative import InitiativeRead
 from app.schemas.milestone import MilestoneRead
 from app.services.documents import can_see_internal
+from app.services.lab import build_lab_dashboard
 
 
 def build_roadmap(db: Session, engagement: Engagement) -> list[RoadmapPhaseRead]:
@@ -46,4 +47,5 @@ def build_dashboard(db: Session, engagement: Engagement, user: User) -> Dashboar
         roadmap=build_roadmap(db, engagement),
         decisions_required=[DecisionRead.model_validate(d) for d in decisions_crud.required(db, engagement.id)],
         next_milestones=[MilestoneRead.model_validate(m) for m in milestones_crud.upcoming(db, engagement.id)],
+        lab=build_lab_dashboard(db, engagement, user),
     )

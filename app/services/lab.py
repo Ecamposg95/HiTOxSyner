@@ -6,11 +6,11 @@ from sqlalchemy.orm import Session
 
 from app.crud import lab as lab_crud
 from app.models.engagement import Engagement
-from app.models.enums import LAB_SESSION_NAMES, LAB_SESSION_THEMES, ActivityAction
+from app.models.enums import ACTIVE_CTA_STATUSES, LAB_SESSION_NAMES, LAB_SESSION_THEMES, ActivityAction, CtaStatus, LabSessionStatus, Role
 from app.models.lab import ActionContract, ActionContractCta, Cta, LabSession, Participant, Pod
 from app.models.user import User
 from app.schemas.common import updates
-from app.schemas.lab import ActionContractCreate, ActionContractUpdate, CtaCreate, CtaUpdate, LabSessionCreate, LabSessionUpdate, ParticipantCreate, ParticipantUpdate, PodCreate, PodUpdate
+from app.schemas.lab import ActionContractCreate, ActionContractUpdate, CtaCreate, CtaStatusTotals, CtaUpdate, LabDashboard, LabSessionCreate, LabSessionSummary, LabSessionUpdate, LabSummary, ParticipantCreate, ParticipantUpdate, PodCreate, PodCtaBreakdown, PodUpdate, SessionCtaBreakdown
 from app.services.activity import diff_changes, log_activity
 from app.services.links import require_in_engagement
 
@@ -253,3 +253,60 @@ def update_contract(db: Session, *, user: User, contract: ActionContract, data: 
     db.commit()
     db.refresh(contract)
     return contract
+
+
+# --- Resumen agregado (dirección) -------------------------------------------
+
+def can_view_lab(user: User) -> bool:
+    return user.role in (Role.SYNER_ADMIN, Role.HITO_EXECUTIVE)
+
+
+def _totals(counts: dict) -> CtaStatusTotals:
+    return CtaStatusTotals(
+        committed=counts.get(CtaStatus.COMMITTED, 0),
+        in_progress=counts.get(CtaStatus.IN_PROGRESS, 0),
+        evidenced=counts.get(CtaStatus.EVIDENCED, 0),
+        dropped=counts.get(CtaStatus.DROPPED, 0),
+        total=sum(counts.values()),
+    )
+
+
+def _evidenced_pct(counts: dict) -> int:
+    """Porcentaje de CTAs con status Evidenced sobre el total (incluye Dropped en el denominador)."""
+    total = sum(counts.values())
+    return round(100 * counts.get(CtaStatus.EVIDENCED, 0) / total) if total else 0
+
+
+def build_summary(db: Session, engagement: Engagement) -> LabSummary:
+    sessions = lab_crud.list_all_sessions(db, engagement.id)
+    counts = lab_crud.cta_counts(db, engagement.id)
+    by_session = lab_crud.cta_counts_by_session(db, engagement.id)
+    by_pod = lab_crud.cta_counts_by_pod(db, engagement.id)
+    return LabSummary(
+        sessions=[LabSessionSummary.model_validate(s) for s in sessions],
+        sessions_done=sum(1 for s in sessions if s.status == LabSessionStatus.DONE),
+        cta_totals=_totals(counts),
+        evidenced_pct=_evidenced_pct(counts),
+        by_session=[SessionCtaBreakdown(session_number=s.number, session_name=s.name, totals=_totals(by_session.get(s.id, {}))) for s in sessions],
+        by_pod=[PodCtaBreakdown(pod_number=p.number, pod_name=p.name, totals=_totals(by_pod.get(p.id, {}))) for p in lab_crud.list_all_pods(db, engagement.id)],
+        active_contracts=lab_crud.count_active_contracts(db, engagement.id),
+    )
+
+
+def build_lab_dashboard(db: Session, engagement: Engagement, user: User) -> LabDashboard | None:
+    """Tarjeta del dashboard: None para colaboradores y cuando el Lab no tiene sesiones."""
+    if not can_view_lab(user):
+        return None
+    sessions = lab_crud.list_all_sessions(db, engagement.id)
+    if not sessions:
+        return None
+    counts = lab_crud.cta_counts(db, engagement.id)
+    next_session = next((s for s in sessions if s.status == LabSessionStatus.PLANNED), None)
+    return LabDashboard(
+        next_session=LabSessionSummary.model_validate(next_session) if next_session else None,
+        sessions_done=sum(1 for s in sessions if s.status == LabSessionStatus.DONE),
+        sessions_total=len(sessions),
+        active_ctas=sum(counts.get(status, 0) for status in ACTIVE_CTA_STATUSES),
+        evidenced_pct=_evidenced_pct(counts),
+        active_contracts=lab_crud.count_active_contracts(db, engagement.id),
+    )

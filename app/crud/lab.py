@@ -85,3 +85,31 @@ def count_active_contracts(db: Session, engagement_id: uuid.UUID) -> int:
         ActionContract.engagement_id == engagement_id, ActionContract.status.in_(ACTIVE_CONTRACT_STATUSES)
     )
     return db.scalar(query) or 0
+
+
+def cta_counts(db: Session, engagement_id: uuid.UUID) -> dict[CtaStatus, int]:
+    rows = db.execute(select(Cta.status, func.count()).where(Cta.engagement_id == engagement_id).group_by(Cta.status)).all()
+    return {status: count for status, count in rows}
+
+
+def cta_counts_by_session(db: Session, engagement_id: uuid.UUID) -> dict[uuid.UUID, dict[CtaStatus, int]]:
+    rows = db.execute(
+        select(Cta.session_id, Cta.status, func.count()).where(Cta.engagement_id == engagement_id).group_by(Cta.session_id, Cta.status)
+    ).all()
+    result: dict[uuid.UUID, dict[CtaStatus, int]] = {}
+    for session_id, status, count in rows:
+        result.setdefault(session_id, {})[status] = count
+    return result
+
+
+def cta_counts_by_pod(db: Session, engagement_id: uuid.UUID) -> dict[uuid.UUID, dict[CtaStatus, int]]:
+    rows = db.execute(
+        select(Participant.pod_id, Cta.status, func.count())
+        .join(Participant, Participant.id == Cta.participant_id)
+        .where(Cta.engagement_id == engagement_id, Participant.pod_id.is_not(None))
+        .group_by(Participant.pod_id, Cta.status)
+    ).all()
+    result: dict[uuid.UUID, dict[CtaStatus, int]] = {}
+    for pod_id, status, count in rows:
+        result.setdefault(pod_id, {})[status] = count
+    return result

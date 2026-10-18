@@ -13,7 +13,7 @@ from app.models.user import User
 from app.schemas.common import Page, Pagination, pagination_params
 from app.schemas.lab import (
     ActionContractCreate, ActionContractRead, ActionContractUpdate, CtaCreate, CtaRead, CtaUpdate, LabSessionCreate, LabSessionRead, LabSessionUpdate, ParticipantCreate, ParticipantRead,
-    ParticipantUpdate, PodCreate, PodRead, PodUpdate,
+    LabSummary, ParticipantUpdate, PodCreate, PodRead, PodUpdate,
 )
 from app.services import lab as lab_service
 
@@ -193,3 +193,15 @@ def update_contract(
     db: Session = Depends(get_db),
 ):
     return lab_service.update_contract(db, user=user, contract=contract, data=data)
+
+
+summary_roles = Depends(require_roles(Role.SYNER_ADMIN, Role.HITO_EXECUTIVE))
+
+
+@router.get("/engagements/{engagement_id}/lab/summary", response_model=LabSummary)
+def lab_summary(
+    engagement: Engagement = Depends(get_engagement),
+    _: User = summary_roles,
+    db: Session = Depends(get_db),
+):
+    return lab_service.build_summary(db, engagement)

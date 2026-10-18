@@ -7,6 +7,7 @@ from app.schemas.decision import DecisionRead
 from app.schemas.engagement import EngagementRead
 from app.schemas.finding import FindingRead
 from app.schemas.initiative import InitiativeRead
+from app.schemas.lab import LabDashboard
 from app.schemas.milestone import MilestoneRead
 
 
@@ -34,3 +35,4 @@ class DashboardRead(BaseModel):
     roadmap: list[RoadmapPhaseRead]
     decisions_required: list[DecisionRead]
     next_milestones: list[MilestoneRead]
+    lab: LabDashboard | None = None
