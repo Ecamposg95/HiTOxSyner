@@ -3,7 +3,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.enums import LabSessionStatus, LabSessionTheme
+from app.models.enums import CtaStatus, LabSessionStatus, LabSessionTheme
 
 
 class LabSessionCreate(BaseModel):
@@ -60,5 +60,85 @@ class PodRead(BaseModel):
     engagement_id: uuid.UUID
     number: int
     name: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ParticipantCreate(BaseModel):
+    full_name: str = Field(min_length=1, max_length=200)
+    area: str = Field(default="", max_length=120)
+    title: str = Field(default="", max_length=200)
+    pod_id: uuid.UUID | None = None
+    is_active: bool = True
+
+
+class ParticipantUpdate(BaseModel):
+    full_name: str | None = Field(default=None, min_length=1, max_length=200)
+    area: str | None = Field(default=None, max_length=120)
+    title: str | None = Field(default=None, max_length=200)
+    pod_id: uuid.UUID | None = None
+    is_active: bool | None = None
+
+
+class ParticipantRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    organization_id: uuid.UUID
+    engagement_id: uuid.UUID
+    full_name: str
+    area: str
+    title: str
+    pod_id: uuid.UUID | None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class CtaCreate(BaseModel):
+    participant_id: uuid.UUID
+    session_id: uuid.UUID
+    trigger: str = Field(default="", max_length=10000)
+    behavior: str = Field(min_length=1, max_length=10000)
+    stakeholder: str = Field(default="", max_length=200)
+    evidence_expected: str = Field(default="", max_length=10000)
+    due_date: date | None = None
+    accountability_partner: str = Field(default="", max_length=200)
+    impact: str = Field(default="", max_length=10000)
+    status: CtaStatus = CtaStatus.COMMITTED
+    evidence_notes: str = Field(default="", max_length=10000)
+
+
+class CtaUpdate(BaseModel):
+    participant_id: uuid.UUID | None = None
+    session_id: uuid.UUID | None = None
+    trigger: str | None = Field(default=None, max_length=10000)
+    behavior: str | None = Field(default=None, min_length=1, max_length=10000)
+    stakeholder: str | None = Field(default=None, max_length=200)
+    evidence_expected: str | None = Field(default=None, max_length=10000)
+    due_date: date | None = None
+    accountability_partner: str | None = Field(default=None, max_length=200)
+    impact: str | None = Field(default=None, max_length=10000)
+    status: CtaStatus | None = None
+    evidence_notes: str | None = Field(default=None, max_length=10000)
+
+
+class CtaRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    organization_id: uuid.UUID
+    engagement_id: uuid.UUID
+    participant_id: uuid.UUID
+    session_id: uuid.UUID
+    trigger: str
+    behavior: str
+    stakeholder: str
+    evidence_expected: str
+    due_date: date | None
+    accountability_partner: str
+    impact: str
+    status: CtaStatus
+    evidence_notes: str
     created_at: datetime
     updated_at: datetime

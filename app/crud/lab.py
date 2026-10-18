@@ -3,7 +3,8 @@ import uuid
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models.lab import LabSession, Pod
+from app.models.enums import CtaStatus
+from app.models.lab import Cta, LabSession, Participant, Pod
 
 
 def _page(db: Session, query, order_by, limit: int, offset: int):
@@ -36,3 +37,29 @@ def list_all_pods(db: Session, engagement_id: uuid.UUID) -> list[Pod]:
 
 def get_pod_by_number(db: Session, engagement_id: uuid.UUID, number: int) -> Pod | None:
     return db.scalar(select(Pod).where(Pod.engagement_id == engagement_id, Pod.number == number))
+
+
+def list_participants(
+    db: Session, engagement_id: uuid.UUID, *, pod_id: uuid.UUID | None = None, is_active: bool | None = None,
+    limit: int = 50, offset: int = 0,
+) -> tuple[list[Participant], int]:
+    query = select(Participant).where(Participant.engagement_id == engagement_id)
+    if pod_id:
+        query = query.where(Participant.pod_id == pod_id)
+    if is_active is not None:
+        query = query.where(Participant.is_active.is_(is_active))
+    return _page(db, query, (Participant.full_name, Participant.created_at), limit, offset)
+
+
+def list_ctas(
+    db: Session, engagement_id: uuid.UUID, *, session_id: uuid.UUID | None = None, pod_id: uuid.UUID | None = None,
+    status: CtaStatus | None = None, limit: int = 50, offset: int = 0,
+) -> tuple[list[Cta], int]:
+    query = select(Cta).where(Cta.engagement_id == engagement_id)
+    if session_id:
+        query = query.where(Cta.session_id == session_id)
+    if pod_id:
+        query = query.join(Participant, Participant.id == Cta.participant_id).where(Participant.pod_id == pod_id)
+    if status:
+        query = query.where(Cta.status == status)
+    return _page(db, query, (Cta.due_date.nulls_last(), Cta.created_at), limit, offset)

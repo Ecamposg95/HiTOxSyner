@@ -6,11 +6,12 @@ from sqlalchemy.orm import Session
 from app.crud import lab as lab_crud
 from app.models.engagement import Engagement
 from app.models.enums import LAB_SESSION_NAMES, LAB_SESSION_THEMES, ActivityAction
-from app.models.lab import LabSession, Pod
+from app.models.lab import Cta, LabSession, Participant, Pod
 from app.models.user import User
 from app.schemas.common import updates
-from app.schemas.lab import LabSessionCreate, LabSessionUpdate, PodCreate, PodUpdate
+from app.schemas.lab import CtaCreate, CtaUpdate, LabSessionCreate, LabSessionUpdate, ParticipantCreate, ParticipantUpdate, PodCreate, PodUpdate
 from app.services.activity import diff_changes, log_activity
+from app.services.links import require_in_engagement
 
 
 def _log(db: Session, *, user: User, engagement: Engagement, action: ActivityAction, entity_type: str, entity_id, summary: str, changes=None) -> None:
@@ -103,3 +104,62 @@ def update_pod(db: Session, *, user: User, pod: Pod, data: PodUpdate) -> Pod:
         db.commit()
         db.refresh(pod)
     return pod
+
+
+# --- Participants -----------------------------------------------------------
+
+def create_participant(db: Session, *, user: User, engagement: Engagement, data: ParticipantCreate) -> Participant:
+    require_in_engagement(db, Pod, data.pod_id, engagement, "pod_id")
+    participant = Participant(**_scoped_kwargs(engagement, user), **data.model_dump())
+    db.add(participant)
+    db.flush()
+    _log(
+        db, user=user, engagement=engagement, action=ActivityAction.CREATED, entity_type="participant",
+        entity_id=participant.id, summary=f'{user.full_name} created Participant "{participant.full_name}"',
+    )
+    db.commit()
+    db.refresh(participant)
+    return participant
+
+
+def update_participant(db: Session, *, user: User, participant: Participant, data: ParticipantUpdate) -> Participant:
+    payload = updates(data, nullable={"pod_id"})
+    engagement = db.get(Engagement, participant.engagement_id)
+    require_in_engagement(db, Pod, payload.get("pod_id"), engagement, "pod_id")
+    if _apply_update(db, user=user, engagement=engagement, entity=participant, payload=payload, entity_type="participant", label=lambda: f'Participant "{participant.full_name}"'):
+        db.commit()
+        db.refresh(participant)
+    return participant
+
+
+# --- CTAs -------------------------------------------------------------------
+
+def cta_label(db: Session, cta: Cta) -> str:
+    participant = db.get(Participant, cta.participant_id)
+    return f'CTA of Participant "{participant.full_name}"'
+
+
+def create_cta(db: Session, *, user: User, engagement: Engagement, data: CtaCreate) -> Cta:
+    participant = require_in_engagement(db, Participant, data.participant_id, engagement, "participant_id")
+    session = require_in_engagement(db, LabSession, data.session_id, engagement, "session_id")
+    cta = Cta(**_scoped_kwargs(engagement, user), **data.model_dump())
+    db.add(cta)
+    db.flush()
+    _log(
+        db, user=user, engagement=engagement, action=ActivityAction.CREATED, entity_type="cta", entity_id=cta.id,
+        summary=f'{user.full_name} created CTA for Participant "{participant.full_name}" in Lab Session {session.number}',
+    )
+    db.commit()
+    db.refresh(cta)
+    return cta
+
+
+def update_cta(db: Session, *, user: User, cta: Cta, data: CtaUpdate) -> Cta:
+    payload = updates(data, nullable={"due_date"})
+    engagement = db.get(Engagement, cta.engagement_id)
+    require_in_engagement(db, Participant, payload.get("participant_id"), engagement, "participant_id")
+    require_in_engagement(db, LabSession, payload.get("session_id"), engagement, "session_id")
+    if _apply_update(db, user=user, engagement=engagement, entity=cta, payload=payload, entity_type="cta", label=lambda: cta_label(db, cta)):
+        db.commit()
+        db.refresh(cta)
+    return cta
