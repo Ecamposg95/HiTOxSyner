@@ -15,7 +15,7 @@ from app.models.engagement import Engagement
 from app.models.enums import Health, Level, OrganizationKind, Role
 from app.models.finding import Finding
 from app.models.initiative import Initiative
-from app.models.lab import LabSession
+from app.models.lab import LabSession, Participant, Pod
 from app.models.meeting import Meeting
 from app.models.milestone import Milestone
 from app.models.organization import Organization
@@ -154,7 +154,7 @@ def _seed_lab(db: Session, admin: User, engagement: Engagement) -> None:
     if not _is_demo_engagement(_initiatives(db, engagement)):
         print("Seed: el engagement no contiene el set demo de initiatives; se omiten los datos demo del Lab.")
         return
-    if _has_rows(db, LabSession, engagement):
+    if any(_has_rows(db, model, engagement) for model in (LabSession, Pod, Participant)):
         return
     sessions = []
     for number, days, status, attendance in ((1, -20, "Done", 18), (2, -6, "Done", 17), (3, 8, "Planned", None), (4, 22, "Planned", None)):

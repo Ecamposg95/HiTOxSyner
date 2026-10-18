@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.enums import ACTIVE_CONTRACT_STATUSES, ContractStatus, CtaStatus
-from app.models.lab import ActionContract, Cta, LabSession, Participant, Pod
+from app.models.lab import ActionContract, ActionContractCta, Cta, LabSession, Participant, Pod
 
 
 def _page(db: Session, query, order_by, limit: int, offset: int):
@@ -113,3 +113,7 @@ def cta_counts_by_pod(db: Session, engagement_id: uuid.UUID) -> dict[uuid.UUID, 
     for pod_id, status, count in rows:
         result.setdefault(pod_id, {})[status] = count
     return result
+
+
+def contract_link_for_cta(db: Session, cta_id: uuid.UUID) -> ActionContractCta | None:
+    return db.scalar(select(ActionContractCta).where(ActionContractCta.cta_id == cta_id).limit(1))

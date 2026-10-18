@@ -10,7 +10,7 @@ Tag = Annotated[str, Field(min_length=1, max_length=50)]
 
 
 def _check_url(value: str | None) -> str | None:
-    if value and not value.startswith(("http://", "https://")):
+    if value and not value.lower().startswith(("http://", "https://")):
         raise ValueError("url debe estar vacía o empezar por http:// o https://")
     return value
 

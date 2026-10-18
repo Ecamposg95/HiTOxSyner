@@ -86,10 +86,10 @@ export function ContractsTab({ engagementId }: { engagementId: string }) {
           </select>
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Inicio"><input className="input" type="date" value={form.start_date ?? ""} onChange={(e) => set("start_date", e.target.value || null)} /></Field>
+          <Field label="Inicio"><input className="input" type="date" value={form.start_date ?? ""} onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value || null, review_30_date: null, review_60_date: null }))} /></Field>
           <Field label="Status"><Select value={form.status ?? "Draft"} onChange={(v) => set("status", v)} options={CONTRACT_STATUSES} /></Field>
-          <Field label="Revisión +30 (automática si se deja vacía)"><input className="input" type="date" value={form.review_30_date ?? ""} onChange={(e) => set("review_30_date", e.target.value || null)} /></Field>
-          <Field label="Revisión +60 (automática si se deja vacía)"><input className="input" type="date" value={form.review_60_date ?? ""} onChange={(e) => set("review_60_date", e.target.value || null)} /></Field>
+          <Field label="Revisión +30 (se recalcula al cambiar el inicio si se deja vacía)"><input className="input" type="date" value={form.review_30_date ?? ""} onChange={(e) => set("review_30_date", e.target.value || null)} /></Field>
+          <Field label="Revisión +60 (se recalcula al cambiar el inicio si se deja vacía)"><input className="input" type="date" value={form.review_60_date ?? ""} onChange={(e) => set("review_60_date", e.target.value || null)} /></Field>
         </div>
         <Field label="Señal de éxito"><textarea className="input" rows={3} value={form.success_signal ?? ""} onChange={(e) => set("success_signal", e.target.value)} maxLength={10000} /></Field>
         <fieldset>

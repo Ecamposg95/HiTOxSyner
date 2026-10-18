@@ -97,3 +97,27 @@ def test_dashboard_lab_card_only_with_sessions_and_hidden_from_collaborators(cli
     client.patch(f"/api/lab/sessions/{s2['id']}", headers=admin, json={"status": "Done"})
     after = client.get(dashboard, headers=exec_a).json()["lab"]
     assert after["next_session"] is None and after["sessions_done"] == 2
+
+
+def test_summary_and_dashboard_ignore_other_engagements(client, world):
+    admin, _ = _populate(client, world)
+    exec_a = login(client, "exec@a.example")
+    summary_url, dashboard_url = _lab(world, "summary"), f"/api/engagements/{world.eng_a.id}/dashboard"
+    before_summary = client.get(summary_url, headers=exec_a).json()
+    before_lab = client.get(dashboard_url, headers=exec_a).json()["lab"]
+
+    def lab_b(segment):
+        return f"/api/engagements/{world.eng_b.id}/lab/{segment}"
+
+    for number in (1, 2, 3):
+        client.post(lab_b("sessions"), headers=admin, json={"number": number, "status": "Done", "attendance_count": 5})
+    session_b = client.get(lab_b("sessions"), headers=admin).json()["items"][0]
+    pod_b = client.post(lab_b("pods"), headers=admin, json={"number": 1, "name": "Pod B"}).json()
+    part_b = client.post(lab_b("participants"), headers=admin, json={"full_name": "De B", "pod_id": pod_b["id"]}).json()
+    for i in range(3):
+        cta = client.post(lab_b("ctas"), headers=admin, json={"participant_id": part_b["id"], "session_id": session_b["id"], "behavior": f"B{i}", "trigger": "t"})
+        assert cta.status_code == 201, cta.text
+    assert client.post(lab_b("contracts"), headers=admin, json={"participant_id": part_b["id"], "status": "Active"}).status_code == 201
+
+    assert client.get(summary_url, headers=exec_a).json() == before_summary
+    assert client.get(dashboard_url, headers=exec_a).json()["lab"] == before_lab

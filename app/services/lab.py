@@ -160,6 +160,9 @@ def update_cta(db: Session, *, user: User, cta: Cta, data: CtaUpdate) -> Cta:
     engagement = db.get(Engagement, cta.engagement_id)
     require_in_engagement(db, Participant, payload.get("participant_id"), engagement, "participant_id")
     require_in_engagement(db, LabSession, payload.get("session_id"), engagement, "session_id")
+    new_participant = payload.get("participant_id")
+    if new_participant is not None and new_participant != cta.participant_id and lab_crud.contract_link_for_cta(db, cta.id):
+        raise HTTPException(status_code=409, detail="El CTA pertenece a un Leadership Action Contract; quítalo del contrato antes de cambiar el participante")
     if _apply_update(db, user=user, engagement=engagement, entity=cta, payload=payload, entity_type="cta", label=lambda: cta_label(db, cta)):
         db.commit()
         db.refresh(cta)

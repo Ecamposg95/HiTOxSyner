@@ -103,3 +103,31 @@ def test_contracts_filter_by_status_and_client_roles_get_403(client, world):
     exec_b = login(client, "exec@b.example")
     assert client.get(base, headers=exec_b).status_code == 404
     assert client.patch(f"/api/lab/contracts/{active['id']}", headers=exec_b, json={"status": "Closed"}).status_code == 404
+
+
+def test_cta_linked_to_contract_cannot_change_participant(client, world):
+    admin, ana, luis, ana_ctas, _ = _setup(client, world)
+    contract = client.post(_base(world, "contracts"), headers=admin, json={"participant_id": ana["id"], "cta_ids": ana_ctas[:1]}).json()
+    url = f"/api/lab/contracts/{contract['id']}"
+    cta_url = f"/api/lab/ctas/{ana_ctas[0]}"
+    blocked = client.patch(cta_url, headers=admin, json={"participant_id": luis["id"]})
+    assert blocked.status_code == 409
+    assert blocked.json()["detail"] == "El CTA pertenece a un Leadership Action Contract; quítalo del contrato antes de cambiar el participante"
+    listing = client.get(_base(world, "ctas"), headers=admin).json()["items"]
+    assert next(c for c in listing if c["id"] == ana_ctas[0])["participant_id"] == ana["id"]
+    assert client.patch(url, headers=admin, json={"status": "Active"}).status_code == 200
+    assert client.patch(url, headers=admin, json={"cta_ids": []}).status_code == 200
+    assert client.patch(cta_url, headers=admin, json={"participant_id": luis["id"]}).status_code == 200
+    assert client.patch(url, headers=admin, json={"success_signal": "Señal"}).status_code == 200
+
+
+def test_contract_participant_change_conflicts_and_succeeds(client, world):
+    admin, ana, luis, ana_ctas, _ = _setup(client, world)
+    base = _base(world, "contracts")
+    contract = client.post(base, headers=admin, json={"participant_id": ana["id"]}).json()
+    client.post(base, headers=admin, json={"participant_id": luis["id"]})
+    url = f"/api/lab/contracts/{contract['id']}"
+    assert client.patch(url, headers=admin, json={"participant_id": luis["id"]}).status_code == 409
+    sofia = client.post(_base(world, "participants"), headers=admin, json={"full_name": "Sofía León"}).json()
+    moved = client.patch(url, headers=admin, json={"participant_id": sofia["id"], "cta_ids": []})
+    assert moved.status_code == 200 and moved.json()["participant_id"] == sofia["id"]

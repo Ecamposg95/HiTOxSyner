@@ -138,7 +138,8 @@ def test_document_url_must_be_empty_or_http(client, world):
     created = client.post(base, headers=admin, json={**DOCUMENT, "url": ""})
     assert created.status_code == 201 and created.json()["url"] == ""
     assert client.post(base, headers=admin, json={**DOCUMENT, "url": "http://intranet.example/doc"}).status_code == 201
+    assert client.post(base, headers=admin, json={**DOCUMENT, "url": "HTTPS://Drive.example.com/x"}).status_code == 201
     assert client.patch(f"/api/documents/{created.json()['id']}", headers=admin, json={"url": "javascript:alert(1)"}).status_code == 422
     updated = client.patch(f"/api/documents/{created.json()['id']}", headers=admin, json={"url": "https://drive.example.com/d/abc"})
     assert updated.status_code == 200 and updated.json()["url"] == "https://drive.example.com/d/abc"
-    assert client.get(base, headers=admin).json()["total"] == 2
+    assert client.get(base, headers=admin).json()["total"] == 3
