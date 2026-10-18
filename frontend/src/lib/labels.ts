@@ -47,4 +47,6 @@ export type LabTab = "sessions" | "participants" | "ctas" | "contracts";
 export const LAB_TABS: { key: LabTab; label: string }[] = [
   { key: "sessions", label: "Sessions" },
   { key: "participants", label: "Participants & Pods" },
+  { key: "ctas", label: "CTA Tracker" },
+  { key: "contracts", label: "Contracts" },
 ];

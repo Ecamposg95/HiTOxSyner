@@ -1,4 +1,6 @@
 import { Navigate, useSearchParams } from "react-router-dom";
+import { ContractsTab } from "../components/lab/ContractsTab";
+import { CtaTrackerTab } from "../components/lab/CtaTrackerTab";
 import { LabSummaryView } from "../components/lab/LabSummaryView";
 import { ParticipantsTab } from "../components/lab/ParticipantsTab";
 import { SessionsTab } from "../components/lab/SessionsTab";
@@ -33,6 +35,8 @@ export function LabPage() {
       </nav>
       {tab === "sessions" && <SessionsTab engagementId={engagementId} />}
       {tab === "participants" && <ParticipantsTab engagementId={engagementId} />}
+      {tab === "ctas" && <CtaTrackerTab engagementId={engagementId} />}
+      {tab === "contracts" && <ContractsTab engagementId={engagementId} />}
     </>
   );
 }
