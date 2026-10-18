@@ -23,9 +23,9 @@ def _log(db: Session, *, user: User, engagement: Engagement, action: ActivityAct
     )
 
 
-def _apply_update(db: Session, *, user: User, engagement: Engagement, entity, payload: dict, entity_type: str, label: Callable[[], str]) -> bool:
+def _apply_update(db: Session, *, user: User, engagement: Engagement, entity, payload: dict, entity_type: str, label: Callable[[], str], extra_changes: list[dict] | None = None) -> bool:
     """Aplica un PATCH ya validado y registra activity. Devuelve False si no hubo cambios."""
-    changes = diff_changes(entity, payload)
+    changes = diff_changes(entity, payload) + list(extra_changes or [])
     if not changes:
         return False
     for field, value in payload.items():
@@ -240,23 +240,16 @@ def update_contract(db: Session, *, user: User, contract: ActionContract, data: 
     cta_ids = _validate_contract_ctas(db, engagement, participant_id, requested_ids if requested_ids is not None else contract.cta_ids)
     if "start_date" in payload:
         _fill_review_dates(payload, only_missing=True)
-    changes = diff_changes(contract, payload)
+    extra = []
     if set(cta_ids) != set(contract.cta_ids):
-        changes.append({"field": "cta_ids", "before": [str(i) for i in contract.cta_ids], "after": [str(i) for i in cta_ids]})
-    if not changes:
+        extra.append({"field": "cta_ids", "before": [str(i) for i in contract.cta_ids], "after": [str(i) for i in cta_ids]})
+    changed = _apply_update(
+        db, user=user, engagement=engagement, entity=contract, payload=payload, entity_type="action_contract",
+        label=lambda: _contract_label(db, contract), extra_changes=extra,
+    )
+    if not changed:
         return contract
-    for field, value in payload.items():
-        setattr(contract, field, value)
     _sync_contract_ctas(contract, cta_ids)
-    status_change = next((c for c in changes if c["field"] == "status"), None)
-    label = _contract_label(db, contract)
-    if status_change:
-        action = ActivityAction.STATUS_CHANGED
-        summary = f'{user.full_name} updated {label} from {status_change["before"]} to {status_change["after"]}'
-    else:
-        action = ActivityAction.UPDATED
-        summary = f"{user.full_name} updated {label}"
-    _log(db, user=user, engagement=engagement, action=action, entity_type="action_contract", entity_id=contract.id, summary=summary, changes=changes)
     db.commit()
     db.refresh(contract)
     return contract

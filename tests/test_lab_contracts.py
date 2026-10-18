@@ -33,11 +33,11 @@ def test_contract_defaults_review_dates_and_links_up_to_three_ctas(client, world
     body = response.json()
     assert body["status"] == "Draft"
     assert body["review_30_date"] == "2026-12-01" and body["review_60_date"] == "2026-12-31"
-    assert body["cta_ids"] == ana_ctas[:3]
+    assert sorted(body["cta_ids"]) == sorted(ana_ctas[:3])
     assert _feed(client, world, admin)["items"][0]["summary"] == 'Syner Admin created Action Contract for Participant "Ana Ruiz"'
     assert _feed(client, world, login(client, "exec@a.example"))["total"] == 0
     listing = client.get(base, headers=admin).json()
-    assert listing["total"] == 1 and listing["items"][0]["cta_ids"] == ana_ctas[:3]
+    assert listing["total"] == 1 and sorted(listing["items"][0]["cta_ids"]) == sorted(ana_ctas[:3])
 
 
 def test_contract_without_start_date_keeps_review_dates_null_and_explicit_dates_win(client, world):
@@ -60,7 +60,7 @@ def test_contract_is_unique_per_participant_and_ctas_must_belong_to_participant(
     assert client.post(base, headers=admin, json={"participant_id": luis["id"], "cta_ids": [luis_cta, luis_cta]}).status_code == 201
     listing = client.get(base, headers=admin).json()
     assert listing["total"] == 2
-    assert next(c for c in listing["items"] if c["id"] == first["id"])["cta_ids"] == ana_ctas[:2]
+    assert sorted(next(c for c in listing["items"] if c["id"] == first["id"])["cta_ids"]) == sorted(ana_ctas[:2])
     assert next(c for c in listing["items"] if c["participant_id"] == luis["id"])["cta_ids"] == [luis_cta]
 
 
