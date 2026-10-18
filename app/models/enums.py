@@ -122,3 +122,48 @@ class DocumentCategory(str, enum.Enum):
     MEETINGS = "Meetings"
     DELIVERABLES = "Deliverables"
     EVIDENCE = "Evidence"
+
+
+class LabSessionTheme(str, enum.Enum):
+    DECIDIR = "DECIDIR"
+    CONFRONTAR = "CONFRONTAR"
+    ALINEAR = "ALINEAR"
+    TRANSFORMAR = "TRANSFORMAR"
+
+
+class LabSessionStatus(str, enum.Enum):
+    PLANNED = "Planned"
+    DONE = "Done"
+    CANCELLED = "Cancelled"
+
+
+class CtaStatus(str, enum.Enum):
+    COMMITTED = "Committed"
+    IN_PROGRESS = "In Progress"
+    EVIDENCED = "Evidenced"
+    DROPPED = "Dropped"
+
+
+class ContractStatus(str, enum.Enum):
+    DRAFT = "Draft"
+    ACTIVE = "Active"
+    REVIEWED_30 = "Reviewed 30"
+    REVIEWED_60 = "Reviewed 60"
+    CLOSED = "Closed"
+
+
+ACTIVE_CTA_STATUSES = (CtaStatus.COMMITTED, CtaStatus.IN_PROGRESS)
+ACTIVE_CONTRACT_STATUSES = (ContractStatus.ACTIVE, ContractStatus.REVIEWED_30, ContractStatus.REVIEWED_60)
+
+LAB_SESSION_NAMES = {
+    1: "The Brain Under Pressure",
+    2: "Trust, Conflict & Difficult Conversations",
+    3: "From Silos to Flow",
+    4: "AI, Judgment & Collective Accountability",
+}
+LAB_SESSION_THEMES = {
+    1: LabSessionTheme.DECIDIR,
+    2: LabSessionTheme.CONFRONTAR,
+    3: LabSessionTheme.ALINEAR,
+    4: LabSessionTheme.TRANSFORMAR,
+}

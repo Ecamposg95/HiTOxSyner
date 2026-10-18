@@ -6,12 +6,13 @@ from app.models.document import Document, DocumentLink
 from app.models.engagement import Engagement
 from app.models.initiative import Initiative
 from app.models.finding import Finding
+from app.models.lab import ActionContract, ActionContractCta, Cta, LabSession, Participant, Pod
 from app.models.meeting import Meeting
 from app.models.milestone import Milestone
 from app.models.organization import Organization
 from app.models.user import User
 
 __all__ = [
-    "Action", "Activity", "Comment", "Decision", "Document", "DocumentLink", "Engagement", "Finding",
-    "Initiative", "Meeting", "Milestone", "Organization", "User",
+    "Action", "ActionContract", "ActionContractCta", "Activity", "Comment", "Cta", "Decision", "Document", "DocumentLink",
+    "Engagement", "Finding", "Initiative", "LabSession", "Meeting", "Milestone", "Organization", "Participant", "Pod", "User",
 ]
