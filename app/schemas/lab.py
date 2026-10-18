@@ -3,7 +3,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.enums import CtaStatus, LabSessionStatus, LabSessionTheme
+from app.models.enums import ContractStatus, CtaStatus, LabSessionStatus, LabSessionTheme
 
 
 class LabSessionCreate(BaseModel):
@@ -140,5 +140,42 @@ class CtaRead(BaseModel):
     impact: str
     status: CtaStatus
     evidence_notes: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ActionContractCreate(BaseModel):
+    participant_id: uuid.UUID
+    start_date: date | None = None
+    review_30_date: date | None = None
+    review_60_date: date | None = None
+    success_signal: str = Field(default="", max_length=10000)
+    status: ContractStatus = ContractStatus.DRAFT
+    cta_ids: list[uuid.UUID] = Field(default_factory=list, max_length=3)
+
+
+class ActionContractUpdate(BaseModel):
+    participant_id: uuid.UUID | None = None
+    start_date: date | None = None
+    review_30_date: date | None = None
+    review_60_date: date | None = None
+    success_signal: str | None = Field(default=None, max_length=10000)
+    status: ContractStatus | None = None
+    cta_ids: list[uuid.UUID] | None = Field(default=None, max_length=3)
+
+
+class ActionContractRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    organization_id: uuid.UUID
+    engagement_id: uuid.UUID
+    participant_id: uuid.UUID
+    start_date: date | None
+    review_30_date: date | None
+    review_60_date: date | None
+    success_signal: str
+    status: ContractStatus
+    cta_ids: list[uuid.UUID]
     created_at: datetime
     updated_at: datetime

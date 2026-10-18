@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import timedelta
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -6,10 +7,10 @@ from sqlalchemy.orm import Session
 from app.crud import lab as lab_crud
 from app.models.engagement import Engagement
 from app.models.enums import LAB_SESSION_NAMES, LAB_SESSION_THEMES, ActivityAction
-from app.models.lab import Cta, LabSession, Participant, Pod
+from app.models.lab import ActionContract, ActionContractCta, Cta, LabSession, Participant, Pod
 from app.models.user import User
 from app.schemas.common import updates
-from app.schemas.lab import CtaCreate, CtaUpdate, LabSessionCreate, LabSessionUpdate, ParticipantCreate, ParticipantUpdate, PodCreate, PodUpdate
+from app.schemas.lab import ActionContractCreate, ActionContractUpdate, CtaCreate, CtaUpdate, LabSessionCreate, LabSessionUpdate, ParticipantCreate, ParticipantUpdate, PodCreate, PodUpdate
 from app.services.activity import diff_changes, log_activity
 from app.services.links import require_in_engagement
 
@@ -163,3 +164,99 @@ def update_cta(db: Session, *, user: User, cta: Cta, data: CtaUpdate) -> Cta:
         db.commit()
         db.refresh(cta)
     return cta
+
+
+# --- Leadership Action Contracts -------------------------------------------
+
+REVIEW_OFFSETS = (("review_30_date", 30), ("review_60_date", 60))
+
+
+def _contract_label(db: Session, contract: ActionContract) -> str:
+    participant = db.get(Participant, contract.participant_id)
+    return f'Action Contract of Participant "{participant.full_name}"'
+
+
+def _validate_contract_ctas(db: Session, engagement: Engagement, participant_id, cta_ids: list) -> list:
+    """Dedup, pertenencia al engagement y al participante del contrato. El máximo de 3 lo impone el schema."""
+    unique_ids = list(dict.fromkeys(cta_ids))
+    for cta_id in unique_ids:
+        cta = require_in_engagement(db, Cta, cta_id, engagement, "cta_ids")
+        if cta.participant_id != participant_id:
+            raise HTTPException(status_code=422, detail="cta_ids deben pertenecer al participante del contrato")
+    return unique_ids
+
+
+def _fill_review_dates(payload: dict, *, only_missing: bool) -> None:
+    start = payload.get("start_date")
+    if start is None:
+        return
+    for field, days in REVIEW_OFFSETS:
+        if only_missing and field in payload:
+            continue
+        if payload.get(field) is None:
+            payload[field] = start + timedelta(days=days)
+
+
+def _sync_contract_ctas(contract: ActionContract, cta_ids: list) -> None:
+    """Quita y añade vínculos sin recrear los que se mantienen (evita chocar con uq_action_contract_ctas)."""
+    current = {link.cta_id: link for link in contract.ctas}
+    for cta_id, link in current.items():
+        if cta_id not in cta_ids:
+            contract.ctas.remove(link)
+    for cta_id in cta_ids:
+        if cta_id not in current:
+            contract.ctas.append(ActionContractCta(cta_id=cta_id))
+
+
+def create_contract(db: Session, *, user: User, engagement: Engagement, data: ActionContractCreate) -> ActionContract:
+    participant = require_in_engagement(db, Participant, data.participant_id, engagement, "participant_id")
+    if lab_crud.get_contract_by_participant(db, engagement.id, participant.id) is not None:
+        raise HTTPException(status_code=409, detail="El participante ya tiene un Leadership Action Contract")
+    cta_ids = _validate_contract_ctas(db, engagement, participant.id, data.cta_ids)
+    payload = data.model_dump(exclude={"cta_ids"})
+    _fill_review_dates(payload, only_missing=False)
+    contract = ActionContract(**_scoped_kwargs(engagement, user), **payload)
+    contract.ctas = [ActionContractCta(cta_id=cta_id) for cta_id in cta_ids]
+    db.add(contract)
+    db.flush()
+    _log(
+        db, user=user, engagement=engagement, action=ActivityAction.CREATED, entity_type="action_contract",
+        entity_id=contract.id, summary=f'{user.full_name} created Action Contract for Participant "{participant.full_name}"',
+    )
+    db.commit()
+    db.refresh(contract)
+    return contract
+
+
+def update_contract(db: Session, *, user: User, contract: ActionContract, data: ActionContractUpdate) -> ActionContract:
+    payload = updates(data, nullable={"start_date", "review_30_date", "review_60_date"})
+    engagement = db.get(Engagement, contract.engagement_id)
+    participant_id = payload.get("participant_id", contract.participant_id)
+    if participant_id != contract.participant_id:
+        require_in_engagement(db, Participant, participant_id, engagement, "participant_id")
+        if lab_crud.get_contract_by_participant(db, engagement.id, participant_id) is not None:
+            raise HTTPException(status_code=409, detail="El participante ya tiene un Leadership Action Contract")
+    requested_ids = payload.pop("cta_ids", None)
+    cta_ids = _validate_contract_ctas(db, engagement, participant_id, requested_ids if requested_ids is not None else contract.cta_ids)
+    if "start_date" in payload:
+        _fill_review_dates(payload, only_missing=True)
+    changes = diff_changes(contract, payload)
+    if set(cta_ids) != set(contract.cta_ids):
+        changes.append({"field": "cta_ids", "before": [str(i) for i in contract.cta_ids], "after": [str(i) for i in cta_ids]})
+    if not changes:
+        return contract
+    for field, value in payload.items():
+        setattr(contract, field, value)
+    _sync_contract_ctas(contract, cta_ids)
+    status_change = next((c for c in changes if c["field"] == "status"), None)
+    label = _contract_label(db, contract)
+    if status_change:
+        action = ActivityAction.STATUS_CHANGED
+        summary = f'{user.full_name} updated {label} from {status_change["before"]} to {status_change["after"]}'
+    else:
+        action = ActivityAction.UPDATED
+        summary = f"{user.full_name} updated {label}"
+    _log(db, user=user, engagement=engagement, action=action, entity_type="action_contract", entity_id=contract.id, summary=summary, changes=changes)
+    db.commit()
+    db.refresh(contract)
+    return contract

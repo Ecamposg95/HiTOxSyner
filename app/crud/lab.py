@@ -3,8 +3,8 @@ import uuid
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models.enums import CtaStatus
-from app.models.lab import Cta, LabSession, Participant, Pod
+from app.models.enums import ACTIVE_CONTRACT_STATUSES, ContractStatus, CtaStatus
+from app.models.lab import ActionContract, Cta, LabSession, Participant, Pod
 
 
 def _page(db: Session, query, order_by, limit: int, offset: int):
@@ -63,3 +63,25 @@ def list_ctas(
     if status:
         query = query.where(Cta.status == status)
     return _page(db, query, (Cta.due_date.nulls_last(), Cta.created_at), limit, offset)
+
+
+def list_contracts(
+    db: Session, engagement_id: uuid.UUID, *, status: ContractStatus | None = None, limit: int = 50, offset: int = 0,
+) -> tuple[list[ActionContract], int]:
+    query = select(ActionContract).where(ActionContract.engagement_id == engagement_id)
+    if status:
+        query = query.where(ActionContract.status == status)
+    return _page(db, query, (ActionContract.created_at,), limit, offset)
+
+
+def get_contract_by_participant(db: Session, engagement_id: uuid.UUID, participant_id: uuid.UUID) -> ActionContract | None:
+    return db.scalar(
+        select(ActionContract).where(ActionContract.engagement_id == engagement_id, ActionContract.participant_id == participant_id)
+    )
+
+
+def count_active_contracts(db: Session, engagement_id: uuid.UUID) -> int:
+    query = select(func.count()).select_from(ActionContract).where(
+        ActionContract.engagement_id == engagement_id, ActionContract.status.in_(ACTIVE_CONTRACT_STATUSES)
+    )
+    return db.scalar(query) or 0

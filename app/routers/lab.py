@@ -7,12 +7,12 @@ from app.crud import lab as lab_crud
 from app.database import get_db
 from app.dependencies import get_engagement, require_roles, scoped
 from app.models.engagement import Engagement
-from app.models.enums import CtaStatus, Role
-from app.models.lab import Cta, LabSession, Participant, Pod
+from app.models.enums import ContractStatus, CtaStatus, Role
+from app.models.lab import ActionContract, Cta, LabSession, Participant, Pod
 from app.models.user import User
 from app.schemas.common import Page, Pagination, pagination_params
 from app.schemas.lab import (
-    CtaCreate, CtaRead, CtaUpdate, LabSessionCreate, LabSessionRead, LabSessionUpdate, ParticipantCreate, ParticipantRead,
+    ActionContractCreate, ActionContractRead, ActionContractUpdate, CtaCreate, CtaRead, CtaUpdate, LabSessionCreate, LabSessionRead, LabSessionUpdate, ParticipantCreate, ParticipantRead,
     ParticipantUpdate, PodCreate, PodRead, PodUpdate,
 )
 from app.services import lab as lab_service
@@ -158,3 +158,38 @@ def update_cta(
     db: Session = Depends(get_db),
 ):
     return lab_service.update_cta(db, user=user, cta=cta, data=data)
+
+
+scoped_contract = Depends(scoped(ActionContract, "contract_id"))
+
+
+@router.get("/engagements/{engagement_id}/lab/contracts", response_model=Page[ActionContractRead])
+def list_contracts(
+    engagement: Engagement = Depends(get_engagement),
+    _: User = syner_only,
+    status: ContractStatus | None = None,
+    pagination: Pagination = Depends(pagination_params),
+    db: Session = Depends(get_db),
+):
+    items, total = lab_crud.list_contracts(db, engagement.id, status=status, limit=pagination.limit, offset=pagination.offset)
+    return Page(items=items, total=total)
+
+
+@router.post("/engagements/{engagement_id}/lab/contracts", response_model=ActionContractRead, status_code=201)
+def create_contract(
+    data: ActionContractCreate,
+    engagement: Engagement = Depends(get_engagement),
+    user: User = syner_only,
+    db: Session = Depends(get_db),
+):
+    return lab_service.create_contract(db, user=user, engagement=engagement, data=data)
+
+
+@router.patch("/lab/contracts/{contract_id}", response_model=ActionContractRead)
+def update_contract(
+    data: ActionContractUpdate,
+    contract: ActionContract = scoped_contract,
+    user: User = syner_only,
+    db: Session = Depends(get_db),
+):
+    return lab_service.update_contract(db, user=user, contract=contract, data=data)
