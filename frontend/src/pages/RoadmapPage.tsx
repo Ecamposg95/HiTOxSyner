@@ -74,7 +74,7 @@ export function RoadmapPage() {
                     <li
                       key={m.id}
                       onClick={() => openEdit(m)}
-                      onKeyDown={writable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openEdit(m); } } : undefined}
+                      onKeyDown={writable ? (e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openEdit(m); } } : undefined}
                       tabIndex={writable ? 0 : undefined}
                       role={writable ? "button" : undefined}
                       className={`rounded border border-line p-2 text-sm ${writable ? "cursor-pointer hover:bg-canvas focus:bg-canvas focus:outline-none" : ""}`}

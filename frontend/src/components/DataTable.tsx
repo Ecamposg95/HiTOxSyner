@@ -29,7 +29,7 @@ export function DataTable<T extends { id: string }>({ columns, rows, onRowClick,
             <tr
               key={row.id}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
-              onKeyDown={onRowClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRowClick(row); } } : undefined}
+              onKeyDown={onRowClick ? (e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRowClick(row); } } : undefined}
               tabIndex={onRowClick ? 0 : undefined}
               role={onRowClick ? "button" : undefined}
               className={`border-b border-line last:border-0 ${onRowClick ? "cursor-pointer hover:bg-canvas focus:bg-canvas focus:outline-none" : ""}`}
