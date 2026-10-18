@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { engagementsApi } from "../api/engagements";
 import { errorMessage } from "../api/client";
+import { Block } from "../components/Block";
 import { EmptyState } from "../components/EmptyState";
 import { ProgressBar } from "../components/ProgressBar";
 import { StatusBadge } from "../components/StatusBadge";
@@ -11,15 +12,6 @@ import { formatDate, formatDateTime } from "../lib/dates";
 import { can } from "../lib/roles";
 import { useAuthStore } from "../stores/auth";
 import { useEngagementStore } from "../stores/engagement";
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="card p-5">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">{title}</h2>
-      {children}
-    </section>
-  );
-}
 
 export function DashboardPage() {
   const user = useAuthStore((s) => s.user);
@@ -63,7 +55,7 @@ export function DashboardPage() {
         <Tile label="Critical Findings" value={data.tiles.critical_findings} tone={data.tiles.critical_findings > 0 ? "danger" : "default"} />
       </div>
 
-      <Section title="Executive Summary">
+      <Block title="Executive Summary">
         {editing ? (
           <div className="space-y-2">
             <textarea className="input min-h-[120px]" value={summary} onChange={(e) => setSummary(e.target.value)} maxLength={2000} />
@@ -81,9 +73,9 @@ export function DashboardPage() {
             )}
           </div>
         )}
-      </Section>
+      </Block>
 
-      <Section title="Transformation Roadmap">
+      <Block title="Transformation Roadmap">
         <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
           {data.roadmap.map((phase) => {
             const done = phase.milestones.filter((m) => m.status === "Done").length;
@@ -100,10 +92,10 @@ export function DashboardPage() {
             );
           })}
         </div>
-      </Section>
+      </Block>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Section title="Active Initiatives">
+        <Block title="Active Initiatives">
           {data.active_initiatives.length === 0 ? (
             <p className="text-sm text-muted">Sin iniciativas activas.</p>
           ) : (
@@ -122,9 +114,9 @@ export function DashboardPage() {
               ))}
             </ul>
           )}
-        </Section>
+        </Block>
 
-        <Section title="Decisions Required">
+        <Block title="Decisions Required">
           {data.decisions_required.length === 0 ? (
             <p className="text-sm text-muted">Sin decisiones pendientes de aprobación.</p>
           ) : (
@@ -137,9 +129,9 @@ export function DashboardPage() {
               ))}
             </ul>
           )}
-        </Section>
+        </Block>
 
-        <Section title="Key Findings">
+        <Block title="Key Findings">
           {data.key_findings.length === 0 ? (
             <p className="text-sm text-muted">Sin hallazgos de alto impacto.</p>
           ) : (
@@ -152,9 +144,9 @@ export function DashboardPage() {
               ))}
             </ul>
           )}
-        </Section>
+        </Block>
 
-        <Section title="Next">
+        <Block title="Next">
           {data.next_actions.length === 0 ? (
             <p className="text-sm text-muted">Sin acciones abiertas.</p>
           ) : (
@@ -167,9 +159,9 @@ export function DashboardPage() {
               ))}
             </ul>
           )}
-        </Section>
+        </Block>
 
-        <Section title="Recent Activity">
+        <Block title="Recent Activity">
           {data.recent_activity.length === 0 ? (
             <p className="text-sm text-muted">Sin actividad.</p>
           ) : (
@@ -182,9 +174,9 @@ export function DashboardPage() {
               ))}
             </ul>
           )}
-        </Section>
+        </Block>
 
-        <Section title="Next Milestones">
+        <Block title="Next Milestones">
           {data.next_milestones.length === 0 ? <p className="text-sm text-muted">Sin milestones programados.</p> : (
             <ul className="space-y-2">
               {data.next_milestones.map((m) => (
@@ -195,7 +187,29 @@ export function DashboardPage() {
               ))}
             </ul>
           )}
-        </Section>
+        </Block>
+        {data.lab && (
+          <Block title="Leadership Lab" action={<Link to="/lab" className="text-xs text-muted hover:underline">Leadership Lab →</Link>}>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="text-[11px] font-medium uppercase tracking-wide text-muted">Próxima sesión</div>
+                {data.lab.next_session ? (
+                  <>
+                    <div className="mt-1 font-medium">{data.lab.next_session.number}. {data.lab.next_session.name}</div>
+                    <div className="text-xs tabular-nums text-muted">{data.lab.next_session.theme} · {formatDate(data.lab.next_session.held_on)}</div>
+                  </>
+                ) : (
+                  <div className="mt-1 text-muted">Sin sesiones pendientes</div>
+                )}
+              </div>
+              <div>
+                <div className="text-[11px] font-medium uppercase tracking-wide text-muted">CTAs con evidencia</div>
+                <div className="mt-1 text-2xl font-semibold tabular-nums">{data.lab.evidenced_pct}%</div>
+                <div className="text-xs text-muted">{data.lab.sessions_done}/{data.lab.sessions_total} sesiones · {data.lab.active_ctas} CTAs activos · {data.lab.active_contracts} contratos activos</div>
+              </div>
+            </div>
+          </Block>
+        )}
       </div>
     </div>
   );

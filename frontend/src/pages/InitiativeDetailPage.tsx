@@ -1,8 +1,9 @@
-import { FormEvent, useState, type ReactNode } from "react";
+import { FormEvent, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { errorMessage } from "../api/client";
 import { documentsApi } from "../api/documents";
 import { initiativesApi, InitiativeInput } from "../api/initiatives";
+import { Block, Prose } from "../components/Block";
 import { Comments } from "../components/Comments";
 import { EmptyState } from "../components/EmptyState";
 import { FormDrawer } from "../components/FormDrawer";
@@ -14,22 +15,6 @@ import { formatDate, formatDateTime } from "../lib/dates";
 import { can } from "../lib/roles";
 import { useAuthStore } from "../stores/auth";
 import { useEngagementStore } from "../stores/engagement";
-
-function Block({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
-  return (
-    <section className="card p-5">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">{title}</h2>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Prose({ text }: { text: string }) {
-  return <p className="whitespace-pre-line text-sm leading-6">{text || <span className="text-muted">Sin contenido.</span>}</p>;
-}
 
 export function InitiativeDetailPage() {
   const { id = "" } = useParams();
