@@ -16,6 +16,12 @@ const TONES: Record<string, string> = {
   "Under Review": "bg-amber-50 text-amber-800 border-amber-200",
   Deferred: "bg-gray-100 text-gray-700 border-gray-200",
   Interno: "bg-amber-50 text-amber-800 border-amber-200",
+  Evidenced: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  Dropped: "bg-gray-100 text-gray-700 border-gray-200",
+  Active: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  Draft: "bg-gray-100 text-gray-700 border-gray-200",
+  "Reviewed 30": "bg-amber-50 text-amber-800 border-amber-200",
+  "Reviewed 60": "bg-amber-50 text-amber-800 border-amber-200",
 };
 
 export function StatusBadge({ value }: { value: string }) {

@@ -128,3 +128,18 @@ def test_toggling_internal_only_rewrites_activity_visibility(client, world):
     assert client.get(f"/api/documents/{doc['id']}", headers=collab).status_code == 404
     assert client.patch(f"/api/documents/{doc['id']}", headers=admin, json={"internal_only": False}).status_code == 200
     assert any("Antes público" in a["summary"] for a in client.get(f"/api/engagements/{world.eng_a.id}/activity", headers=collab).json()["items"])
+
+
+def test_document_url_must_be_empty_or_http(client, world):
+    admin = login(client, "admin@syner.example")
+    base = f"/api/engagements/{world.eng_a.id}/documents"
+    for bad in ("javascript:alert(1)", "ftp://files.example.com/x", "drive.example.com/d/abc"):
+        assert client.post(base, headers=admin, json={**DOCUMENT, "url": bad}).status_code == 422, bad
+    created = client.post(base, headers=admin, json={**DOCUMENT, "url": ""})
+    assert created.status_code == 201 and created.json()["url"] == ""
+    assert client.post(base, headers=admin, json={**DOCUMENT, "url": "http://intranet.example/doc"}).status_code == 201
+    assert client.post(base, headers=admin, json={**DOCUMENT, "url": "HTTPS://Drive.example.com/x"}).status_code == 201
+    assert client.patch(f"/api/documents/{created.json()['id']}", headers=admin, json={"url": "javascript:alert(1)"}).status_code == 422
+    updated = client.patch(f"/api/documents/{created.json()['id']}", headers=admin, json={"url": "https://drive.example.com/d/abc"})
+    assert updated.status_code == 200 and updated.json()["url"] == "https://drive.example.com/d/abc"
+    assert client.get(base, headers=admin).json()["total"] == 3

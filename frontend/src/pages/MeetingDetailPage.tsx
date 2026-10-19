@@ -1,4 +1,4 @@
-import { FormEvent, useState, type ReactNode } from "react";
+import { FormEvent, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ActionInput } from "../api/actions";
 import { errorMessage } from "../api/client";
@@ -7,6 +7,7 @@ import { engagementsApi } from "../api/engagements";
 import { initiativesApi } from "../api/initiatives";
 import { meetingsApi, MeetingInput } from "../api/meetings";
 import { ActionForm, EMPTY_ACTION } from "../components/ActionForm";
+import { Block, Prose } from "../components/Block";
 import { Comments } from "../components/Comments";
 import { DecisionForm, EMPTY_DECISION } from "../components/DecisionForm";
 import { EmptyState } from "../components/EmptyState";
@@ -20,22 +21,6 @@ import { useEngagementStore } from "../stores/engagement";
 import { MeetingForm } from "./MeetingsPage";
 
 type Drawer = "none" | "edit" | "decision" | "action";
-
-function Block({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
-  return (
-    <section className="card p-5">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">{title}</h2>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Prose({ text }: { text: string }) {
-  return <p className="whitespace-pre-line text-sm leading-6">{text || <span className="text-muted">Sin contenido.</span>}</p>;
-}
 
 export function MeetingDetailPage() {
   const { id = "" } = useParams();

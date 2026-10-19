@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ActionsPage } from "./pages/ActionsPage";
-import { ComingSoonPage } from "./pages/ComingSoonPage";
+import { LabPage } from "./pages/LabPage";
 import { DecisionsPage } from "./pages/DecisionsPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
 import { FindingsPage } from "./pages/FindingsPage";
@@ -60,7 +60,7 @@ export const router = createBrowserRouter([
           { path: "/meetings", element: <MeetingsPage /> },
           { path: "/meetings/:id", element: <MeetingDetailPage /> },
           { path: "/documents", element: <DocumentsPage /> },
-          { path: "/lab", element: <ComingSoonPage title="Leadership Lab" /> },
+          { path: "/lab", element: <LabPage /> },
           { path: "*", element: <Navigate to="/" replace /> },
         ],
       },

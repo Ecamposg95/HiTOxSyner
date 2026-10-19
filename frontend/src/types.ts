@@ -129,6 +129,7 @@ export interface Dashboard {
   roadmap: { phase: RoadmapPhase; milestones: Milestone[] }[];
   decisions_required: Decision[];
   next_milestones: Milestone[];
+  lab: LabDashboard | null;
 }
 
 export interface InitiativeDetail {
@@ -235,4 +236,114 @@ export interface Comment {
   author_name: string;
   body: string;
   created_at: string;
+}
+
+export type LabTheme = "DECIDIR" | "CONFRONTAR" | "ALINEAR" | "TRANSFORMAR";
+export type LabSessionStatus = "Planned" | "Done" | "Cancelled";
+
+export interface LabSession {
+  id: string;
+  engagement_id: string;
+  number: number;
+  name: string;
+  theme: LabTheme;
+  held_on: string | null;
+  status: LabSessionStatus;
+  attendance_count: number | null;
+  syner_notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Pod {
+  id: string;
+  engagement_id: string;
+  number: number;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Participant {
+  id: string;
+  engagement_id: string;
+  full_name: string;
+  area: string;
+  title: string;
+  pod_id: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CtaStatus = "Committed" | "In Progress" | "Evidenced" | "Dropped";
+
+export interface Cta {
+  id: string;
+  engagement_id: string;
+  participant_id: string;
+  session_id: string;
+  trigger: string;
+  behavior: string;
+  stakeholder: string;
+  evidence_expected: string;
+  due_date: string | null;
+  accountability_partner: string;
+  impact: string;
+  status: CtaStatus;
+  evidence_notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ContractStatus = "Draft" | "Active" | "Reviewed 30" | "Reviewed 60" | "Closed";
+
+export interface ActionContract {
+  id: string;
+  engagement_id: string;
+  participant_id: string;
+  start_date: string | null;
+  review_30_date: string | null;
+  review_60_date: string | null;
+  success_signal: string;
+  status: ContractStatus;
+  cta_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CtaStatusTotals {
+  committed: number;
+  in_progress: number;
+  evidenced: number;
+  dropped: number;
+  total: number;
+}
+
+export interface LabSessionSummary {
+  number: number;
+  name: string;
+  theme: LabTheme;
+  held_on: string | null;
+  status: LabSessionStatus;
+  attendance_count: number | null;
+}
+
+export interface LabSummary {
+  sessions: LabSessionSummary[];
+  sessions_done: number;
+  cta_totals: CtaStatusTotals;
+  evidenced_pct: number;
+  by_session: { session_number: number; session_name: string; totals: CtaStatusTotals }[];
+  by_pod: { pod_number: number; pod_name: string; totals: CtaStatusTotals }[];
+  active_contracts: number;
+}
+
+export interface LabDashboard {
+  next_session: LabSessionSummary | null;
+  sessions_done: number;
+  sessions_total: number;
+  active_ctas: number;
+  evidenced_pct: number;
+  active_contracts: number;
 }

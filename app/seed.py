@@ -15,6 +15,7 @@ from app.models.engagement import Engagement
 from app.models.enums import Health, Level, OrganizationKind, Role
 from app.models.finding import Finding
 from app.models.initiative import Initiative
+from app.models.lab import LabSession, Participant, Pod
 from app.models.meeting import Meeting
 from app.models.milestone import Milestone
 from app.models.organization import Organization
@@ -25,6 +26,7 @@ from app.schemas.decision import DecisionCreate
 from app.schemas.document import DocumentCreate, DocumentLinkCreate
 from app.schemas.finding import FindingCreate
 from app.schemas.initiative import InitiativeCreate
+from app.schemas.lab import ActionContractCreate, CtaCreate, LabSessionCreate, ParticipantCreate, PodCreate
 from app.schemas.meeting import MeetingCreate
 from app.schemas.milestone import MilestoneCreate
 from app.services import actions as actions_service
@@ -33,6 +35,7 @@ from app.services import decisions as decisions_service
 from app.services import documents as documents_service
 from app.services import findings as findings_service
 from app.services import initiatives as initiatives_service
+from app.services import lab as lab_service
 from app.services import meetings as meetings_service
 from app.services import milestones as milestones_service
 
@@ -111,6 +114,87 @@ def _seed_delivery(db: Session, admin: User, collab: User, engagement: Engagemen
 
 def _is_demo_engagement(initiatives: list[Initiative]) -> bool:
     return len(initiatives) >= 4 and all(i.name.startswith("[Demo]") for i in initiatives)
+
+
+ORION_DOCUMENTS = [
+    ("Executive Leadership Lab — Facilitator Playbook", "0.9", "HITO_Executive_Leadership_Lab_Facilitator_Playbook_v0.9.pdf"),
+    ("Project ORION — Leadership Pressure Room Case Book (ES)", "1.0", "HITO_Leadership_Pressure_Room_Project_ORION_Case_Book_ES_v1.0.pdf"),
+    ("Project ORION — Participant Handout Master (ES)", "1.0", "HITO_Participant_Handout_Master_Project_ORION_ES_v1.0.pdf"),
+    ("Project ORION — Participant Packet 00: Pre-Work (ES)", "1.0", "HITO_Participant_Packet_00_PreWork_ORION_ES_v1.0.pdf"),
+    ("Project ORION — Participant Packet 01: Lab 01 DECIDIR (ES)", "1.0", "HITO_Participant_Packet_01_Lab01_DECIDIR_ORION_ES_v1.0.pdf"),
+    ("Project ORION — Participant Packet 02: Lab 02 CONFRONTAR (ES)", "1.0", "HITO_Participant_Packet_02_Lab02_CONFRONTAR_ORION_ES_v1.0.pdf"),
+    ("Project ORION — Participant Packet 03: Lab 03 ALINEAR (ES)", "1.0", "HITO_Participant_Packet_03_Lab03_ALINEAR_ORION_ES_v1.0.pdf"),
+    ("Project ORION — Participant Packet 04: Lab 04 TRANSFORMAR (ES)", "1.0", "HITO_Participant_Packet_04_Lab04_TRANSFORMAR_ORION_ES_v1.0.pdf"),
+]
+
+
+def _seed_orion_documents(db: Session, admin: User, engagement: Engagement) -> None:
+    """Material del Executive Leadership Lab / Project ORION registrado como Documents internos (spec sección 7).
+
+    No es dato demo: se registra siempre, idempotente por nombre. La URL queda vacía porque el primer release
+    no integra almacenamiento documental; Syner la completa desde la UI cuando publique los archivos.
+    """
+    existing = set(db.scalars(select(Document.name).where(Document.engagement_id == engagement.id)))
+    for name, version, filename in ORION_DOCUMENTS:
+        if name in existing:
+            continue
+        documents_service.create_document(
+            db, user=admin, engagement=engagement,
+            data=DocumentCreate(
+                name=name, category="Deliverables", version=version, url="", tags=["orion", "leadership-lab"],
+                internal_only=True, description=f"Material del Executive Leadership Lab / Project ORION. Archivo fuente: docs/{filename}",
+            ),
+        )
+    db.commit()
+
+
+def _seed_lab(db: Session, admin: User, engagement: Engagement) -> None:
+    """Sesiones, pods, participantes, CTAs y contratos demo del plan 3. Todo ficticio, con prefijo [Demo]."""
+    today = date.today()
+    if not _is_demo_engagement(_initiatives(db, engagement)):
+        print("Seed: el engagement no contiene el set demo de initiatives; se omiten los datos demo del Lab.")
+        return
+    if any(_has_rows(db, model, engagement) for model in (LabSession, Pod, Participant)):
+        return
+    sessions = []
+    for number, days, status, attendance in ((1, -20, "Done", 18), (2, -6, "Done", 17), (3, 8, "Planned", None), (4, 22, "Planned", None)):
+        sessions.append(lab_service.create_session(
+            db, user=admin, engagement=engagement,
+            data=LabSessionCreate(number=number, held_on=today + timedelta(days=days), status=status, attendance_count=attendance, syner_notes="[Demo] Notas internas de facilitación." if status == "Done" else ""),
+        ))
+    pods = [
+        lab_service.create_pod(db, user=admin, engagement=engagement, data=PodCreate(number=number, name=f"[Demo] Pod {name}"))
+        for number, name in ((1, "Norte"), (2, "Sur"), (3, "Centro"), (4, "Bajío"))
+    ]
+    areas = ("Operaciones", "Finanzas", "Comercial", "Tecnología", "Personas")
+    participants = [
+        lab_service.create_participant(
+            db, user=admin, engagement=engagement,
+            data=ParticipantCreate(full_name=f"[Demo] Participante {i + 1:02d}", area=areas[i % 5], title="Gerente (demo)", pod_id=pods[i % 4].id),
+        )
+        for i in range(20)
+    ]
+    ctas = []
+    for participant_idx, session_idx, status in ((0, 0, "Evidenced"), (0, 1, "In Progress"), (1, 0, "Evidenced"), (1, 1, "Committed"), (2, 0, "Evidenced"), (3, 0, "In Progress"), (4, 1, "In Progress"), (5, 0, "Dropped")):
+        ctas.append(lab_service.create_cta(
+            db, user=admin, engagement=engagement,
+            data=CtaCreate(
+                participant_id=participants[participant_idx].id, session_id=sessions[session_idx].id,
+                trigger="[Demo] Situación de presión en comité.", behavior="[Demo] Conducta comprometida de demostración.",
+                stakeholder="Equipo directo (demo)", evidence_expected="[Demo] Evidencia esperada.", due_date=today + timedelta(days=14),
+                accountability_partner="[Demo] Partner", impact="[Demo] Impacto esperado.", status=status,
+                evidence_notes="[Demo] Evidencia registrada." if status == "Evidenced" else "",
+            ),
+        ))
+    lab_service.create_contract(
+        db, user=admin, engagement=engagement,
+        data=ActionContractCreate(participant_id=participants[0].id, start_date=today - timedelta(days=5), success_signal="[Demo] Señal de éxito observable.", status="Active", cta_ids=[ctas[0].id, ctas[1].id]),
+    )
+    lab_service.create_contract(
+        db, user=admin, engagement=engagement,
+        data=ActionContractCreate(participant_id=participants[1].id, success_signal="[Demo] Pendiente de activar.", status="Draft", cta_ids=[ctas[2].id]),
+    )
+    db.commit()
 
 
 def _seed_client_room(db: Session, admin: User, collab: User, engagement: Engagement) -> None:
@@ -215,6 +299,8 @@ def seed(db: Session) -> None:
 
     _seed_delivery(db, admin, collab, engagement)
     _seed_client_room(db, admin, collab, engagement)
+    _seed_lab(db, admin, engagement)
+    _seed_orion_documents(db, admin, engagement)
 
 
 if __name__ == "__main__":

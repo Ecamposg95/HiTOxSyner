@@ -53,3 +53,13 @@ def test_body_is_required_and_comments_are_scoped(client, world):
     assert client.post(base, headers=admin, json={"entity_type": "initiative", "entity_id": initiative["id"], "body": ""}).status_code == 422
     assert client.get(base, headers=login(client, "exec@b.example"), params={"entity_type": "initiative", "entity_id": initiative["id"]}).status_code == 404
     assert client.post(base, headers=login(client, "collab@b.example"), json={"entity_type": "initiative", "entity_id": initiative["id"], "body": "x"}).status_code == 404
+
+
+def test_listing_comments_rejects_unknown_entity_type(client, world):
+    headers = login(client, "collab@a.example")
+    response = client.get(
+        f"/api/engagements/{world.eng_a.id}/comments", headers=headers,
+        params={"entity_type": "unicorn", "entity_id": str(uuid.uuid4())},
+    )
+    assert response.status_code == 422
+    assert "entity_type" in response.json()["detail"]

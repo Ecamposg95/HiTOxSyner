@@ -3,6 +3,7 @@ import { errorMessage } from "../api/client";
 import { decisionsApi, DecisionInput } from "../api/decisions";
 import { initiativesApi } from "../api/initiatives";
 import { meetingsApi } from "../api/meetings";
+import { Prose } from "../components/Block";
 import { DataTable } from "../components/DataTable";
 import { DecisionForm, EMPTY_DECISION, decisionToInput } from "../components/DecisionForm";
 import { EmptyState } from "../components/EmptyState";
@@ -17,15 +18,6 @@ import { can } from "../lib/roles";
 import { useAuthStore } from "../stores/auth";
 import { useEngagementStore } from "../stores/engagement";
 import type { Decision, DecisionStatus } from "../types";
-
-function Prose({ label, text }: { label: string; text: string }) {
-  return (
-    <div>
-      <div className="label">{label}</div>
-      <p className="whitespace-pre-line text-sm leading-6">{text || <span className="text-muted">Sin contenido.</span>}</p>
-    </div>
-  );
-}
 
 export function DecisionsPage() {
   const user = useAuthStore((s) => s.user);
