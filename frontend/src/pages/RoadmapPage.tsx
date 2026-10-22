@@ -1,10 +1,13 @@
 import { FormEvent, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { errorMessage } from "../api/client";
 import { initiativesApi } from "../api/initiatives";
 import { milestonesApi, MilestoneInput } from "../api/milestones";
+import { Prose } from "../components/Block";
 import { EmptyState } from "../components/EmptyState";
 import { Field, Select } from "../components/Field";
 import { FormDrawer } from "../components/FormDrawer";
+import { RoadmapTimeline } from "../components/roadmap/RoadmapTimeline";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { useResource } from "../hooks/useResource";
@@ -28,6 +31,9 @@ export function RoadmapPage() {
   const [form, setForm] = useState<MilestoneInput>(EMPTY);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [params, setParams] = useSearchParams();
+  const view = params.get("view") === "list" ? "list" : "timeline";
+  const [viewing, setViewing] = useState<Milestone | null>(null);
 
   function openCreate(phase: RoadmapPhase = "Discover") { setEditing(null); setForm({ ...EMPTY, phase }); setFormError(null); setOpen(true); }
   function openEdit(m: Milestone) {
@@ -54,10 +60,25 @@ export function RoadmapPage() {
 
   return (
     <>
-      <PageHeader title="Transformation Roadmap" subtitle="Seis fases del programa y sus milestones" action={writable && <button className="btn btn-primary" onClick={() => openCreate()}>Nuevo milestone</button>} />
+      <PageHeader eyebrow="Estrategia" title="Transformation Roadmap" subtitle="Seis fases del programa y sus milestones" action={writable && <button className="btn btn-primary" onClick={() => openCreate()}>Nuevo milestone</button>} />
+      <div className="mb-4 inline-flex rounded border border-line p-0.5" role="group" aria-label="Vista del roadmap">
+        {([["timeline", "Timeline"], ["list", "Lista"]] as const).map(([v, label]) => (
+          <button
+            key={v}
+            type="button"
+            aria-pressed={view === v}
+            onClick={() => setParams({ view: v })}
+            className={`rounded px-3 py-1 text-sm ${view === v ? "bg-surface-2 font-semibold text-ink" : "text-muted hover:text-ink"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       {error && <p className="mb-4 text-sm text-danger">{error}</p>}
       {loading && !data ? <p className="text-sm text-muted">Cargando…</p> : items.length === 0 ? (
         <EmptyState title="Sin milestones" hint={writable ? "Crea el primer milestone del roadmap." : undefined} />
+      ) : view === "timeline" ? (
+        <RoadmapTimeline milestones={items} onSelect={(m) => (writable ? openEdit(m) : setViewing(m))} />
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           {ROADMAP_PHASES.map((phase) => {
@@ -77,7 +98,7 @@ export function RoadmapPage() {
                       onKeyDown={writable ? (e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openEdit(m); } } : undefined}
                       tabIndex={writable ? 0 : undefined}
                       role={writable ? "button" : undefined}
-                      className={`rounded border border-line p-2 text-sm ${writable ? "cursor-pointer hover:bg-canvas focus:bg-canvas focus:outline-none" : ""}`}
+                      className={`rounded border border-line p-2 text-sm ${writable ? "cursor-pointer hover:bg-surface-2 focus:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent" : ""}`}
                     >
                       <div className="font-medium leading-5">{m.name}</div>
                       <div className="mt-1 flex items-center justify-between gap-2">
@@ -110,6 +131,19 @@ export function RoadmapPage() {
         </div>
         <Field label="Deliverable"><textarea className="input" rows={2} value={form.deliverable ?? ""} onChange={(e) => set("deliverable", e.target.value)} /></Field>
         <Field label="Descripción"><textarea className="input" rows={3} value={form.description ?? ""} onChange={(e) => set("description", e.target.value)} /></Field>
+      </FormDrawer>
+      <FormDrawer open={viewing !== null} title={viewing?.name ?? "Milestone"} onClose={() => setViewing(null)} onSubmit={(e) => e.preventDefault()} hideSubmit>
+        {viewing && (
+          <div className="space-y-4">
+            <Prose label="Fase" text={viewing.phase} />
+            <Prose label="Fecha objetivo" text={viewing.due_date ? formatDate(viewing.due_date) : ""} />
+            <Prose label="Estado" text={viewing.status} />
+            <Prose label="Owner" text={viewing.owner} />
+            <Prose label="Initiative" text={initiativeName(viewing.initiative_id) ?? ""} />
+            <Prose label="Deliverable" text={viewing.deliverable} />
+            <Prose label="Descripción" text={viewing.description} />
+          </div>
+        )}
       </FormDrawer>
     </>
   );

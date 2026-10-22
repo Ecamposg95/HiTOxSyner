@@ -8,7 +8,9 @@ import { Comments } from "../components/Comments";
 import { EmptyState } from "../components/EmptyState";
 import { FormDrawer } from "../components/FormDrawer";
 import { InitiativeForm, initiativeToInput } from "../components/InitiativeForm";
-import { ProgressBar } from "../components/ProgressBar";
+import { KpiCard } from "../components/KpiCard";
+import { PageHeader } from "../components/PageHeader";
+import { ProgressRing } from "../components/ProgressRing";
 import { StatusBadge } from "../components/StatusBadge";
 import { useResource } from "../hooks/useResource";
 import { formatDate, formatDateTime } from "../lib/dates";
@@ -70,29 +72,43 @@ export function InitiativeDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="card p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <Link to="/initiatives" className="text-xs text-muted hover:underline">← Initiatives</Link>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight">{i.name}</h1>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
-              <StatusBadge value={i.status} />
-              <StatusBadge value={i.priority} />
-              <span>Owner HiTO: {i.hito_owner || "—"}</span>
-              <span>Target: {formatDate(i.target_date)}</span>
-            </div>
-          </div>
-          {writable && <button className="btn" onClick={() => { setForm(initiativeToInput(i)); setFormError(null); setOpen(true); }}>Editar</button>}
-        </div>
-        <div className="mt-4 flex items-center gap-3">
-          <ProgressBar value={i.progress_pct} />
-          <span className="text-sm tabular-nums">{i.progress_pct}%</span>
+      <div>
+        <Link to="/initiatives" className="mb-3 inline-block text-xs text-muted hover:underline">← Initiatives</Link>
+        <PageHeader
+          eyebrow={i.area || "Initiative"}
+          title={i.name}
+          action={writable ? <button className="btn" onClick={() => { setForm(initiativeToInput(i)); setFormError(null); setOpen(true); }}>Editar</button> : undefined}
+        />
+        <div className="-mt-3 flex flex-wrap items-center gap-2">
+          <StatusBadge value={i.status} />
+          <StatusBadge value={i.priority} />
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Block title="Objective"><Prose text={i.objective} /></Block>
-        <Block title="Expected Outcome"><Prose text={i.expected_outcome} /></Block>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <KpiCard label="Avance" value={`${i.progress_pct}%`} visual={<ProgressRing value={i.progress_pct} size={44} />} />
+        <KpiCard label="Owner HiTO" value={<span className="font-display text-lg break-words">{i.hito_owner || "—"}</span>} />
+        <KpiCard label="Inicio" value={<span className="font-display text-lg">{formatDate(i.start_date)}</span>} />
+        <KpiCard label="Objetivo" value={<span className="font-display text-lg">{formatDate(i.target_date)}</span>} />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-6">
+          <Block title="Objetivo"><Prose text={i.objective} /></Block>
+          <Block title="Descripción"><Prose text={i.description} /></Block>
+          <Block title="Resultado esperado"><Prose text={i.expected_outcome} /></Block>
+          <Block title="Risks"><Prose text={i.risks} /></Block>
+          <Block title="Activity">
+            {data.activity.length === 0 ? <p className="text-sm text-muted">Sin actividad.</p> : (
+              <ul className="space-y-2">
+                {data.activity.map((a) => (
+                  <li key={a.id} className="text-sm">{a.summary}<span className="block text-xs text-muted">{formatDateTime(a.created_at)}</span></li>
+                ))}
+              </ul>
+            )}
+          </Block>
+        </div>
+        <div className="min-w-0 space-y-6">
         <Block title="Milestones" action={<Link to="/roadmap" className="text-xs text-muted hover:underline">Roadmap →</Link>}>
           {data.milestones.length === 0 ? <p className="text-sm text-muted">Sin milestones vinculados.</p> : (
             <ul className="space-y-2">
@@ -129,7 +145,6 @@ export function InitiativeDetailPage() {
             </ul>
           )}
         </Block>
-        <Block title="Risks"><Prose text={i.risks} /></Block>
         <Block title="Findings origen">
           {data.findings.length === 0 ? <p className="text-sm text-muted">Esta iniciativa no proviene de un finding.</p> : (
             <ul className="space-y-2">
@@ -164,16 +179,8 @@ export function InitiativeDetailPage() {
           )}
           {linkError && <p className="mt-2 text-sm text-danger">{linkError}</p>}
         </Block>
-        <Block title="Activity">
-          {data.activity.length === 0 ? <p className="text-sm text-muted">Sin actividad.</p> : (
-            <ul className="space-y-2">
-              {data.activity.map((a) => (
-                <li key={a.id} className="text-sm">{a.summary}<span className="block text-xs text-muted">{formatDateTime(a.created_at)}</span></li>
-              ))}
-            </ul>
-          )}
-        </Block>
         <Comments entityType="initiative" entityId={id} />
+        </div>
       </div>
 
       <FormDrawer open={open} title="Editar initiative" onClose={() => setOpen(false)} onSubmit={submit} submitting={busy} error={formError}>

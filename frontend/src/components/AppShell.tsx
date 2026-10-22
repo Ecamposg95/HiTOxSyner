@@ -13,12 +13,12 @@ export function AppShell() {
       {open && (
         <div className="fixed inset-0 z-40 flex lg:hidden">
           <Sidebar onNavigate={() => setOpen(false)} />
-          <div className="flex-1 bg-black/20" onClick={() => setOpen(false)} />
+          <div className="flex-1 bg-[rgba(5,8,16,.6)] backdrop-blur-sm" onClick={() => setOpen(false)} />
         </div>
       )}
       <div className="flex min-w-0 flex-1 flex-col">
         <Header onMenu={() => setOpen(true)} />
-        <main className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
+        <main className="min-w-0 flex-1 overflow-y-auto px-4 py-6 md:px-8">
           <div className="mx-auto max-w-6xl">
             <Outlet />
           </div>

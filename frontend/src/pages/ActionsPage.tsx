@@ -68,6 +68,7 @@ export function ActionsPage({ mine = false }: { mine?: boolean }) {
   return (
     <>
       <PageHeader
+        eyebrow="Ejecución"
         title={mine ? "My Actions" : "Actions"}
         subtitle={mine ? "Compromisos asignados a ti" : "Registro de compromisos del engagement"}
         action={

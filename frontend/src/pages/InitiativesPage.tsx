@@ -41,7 +41,7 @@ export function InitiativesPage() {
 
   return (
     <>
-      <PageHeader title="Initiatives" subtitle="Workstreams derivados del diagnóstico" action={can(user, "write") && <button className="btn btn-primary" onClick={() => setOpen(true)}>Nueva initiative</button>} />
+      <PageHeader eyebrow="Estrategia" title="Initiatives" subtitle="Workstreams derivados del diagnóstico" action={can(user, "write") && <button className="btn btn-primary" onClick={() => setOpen(true)}>Nueva initiative</button>} />
       <div className="mb-4 w-48"><Select value={status} onChange={setStatus} options={INITIATIVE_STATUSES} allowEmpty="Todos los estados" /></div>
       {error && <p className="mb-4 text-sm text-danger">{error}</p>}
       {loading && !data ? <p className="text-sm text-muted">Cargando…</p> : (

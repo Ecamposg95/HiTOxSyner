@@ -60,7 +60,7 @@ export function MeetingsPage() {
 
   return (
     <>
-      <PageHeader title="Meetings" subtitle="Minutas, acuerdos y siguientes pasos" action={writable && <button className="btn btn-primary" onClick={() => { setForm(EMPTY_MEETING); setFormError(null); setOpen(true); }}>Nueva meeting</button>} />
+      <PageHeader eyebrow="Ejecución" title="Meetings" subtitle="Minutas, acuerdos y siguientes pasos" action={writable && <button className="btn btn-primary" onClick={() => { setForm(EMPTY_MEETING); setFormError(null); setOpen(true); }}>Nueva meeting</button>} />
       {error && <p className="mb-4 text-sm text-danger">{error}</p>}
       {loading && !data ? <p className="text-sm text-muted">Cargando…</p> : (
         <DataTable<Meeting>

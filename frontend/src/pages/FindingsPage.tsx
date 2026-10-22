@@ -68,7 +68,7 @@ export function FindingsPage() {
 
   return (
     <>
-      <PageHeader title="Findings" subtitle="Hallazgos, riesgos y oportunidades del diagnóstico" action={writable && <button className="btn btn-primary" onClick={openCreate}>Nuevo finding</button>} />
+      <PageHeader eyebrow="Estrategia" title="Findings" subtitle="Hallazgos, riesgos y oportunidades del diagnóstico" action={writable && <button className="btn btn-primary" onClick={openCreate}>Nuevo finding</button>} />
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="w-48"><Select value={status} onChange={setStatus} options={FINDING_STATUSES} allowEmpty="Todos los estados" /></div>
         <div className="w-48"><Select value={type} onChange={setType} options={FINDING_TYPES} allowEmpty="Todos los tipos" /></div>

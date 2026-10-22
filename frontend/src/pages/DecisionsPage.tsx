@@ -74,7 +74,7 @@ export function DecisionsPage() {
 
   return (
     <>
-      <PageHeader title="Decision Log" subtitle="Decisiones estratégicas con contexto, alternativas y recomendación Syner" action={writable && <button className="btn btn-primary" onClick={openCreate}>Nueva decision</button>} />
+      <PageHeader eyebrow="Ejecución" title="Decision Log" subtitle="Decisiones estratégicas con contexto, alternativas y recomendación Syner" action={writable && <button className="btn btn-primary" onClick={openCreate}>Nueva decision</button>} />
       <div className="mb-4 w-48"><Select value={status} onChange={setStatus} options={DECISION_STATUSES} allowEmpty="Todos los estados" /></div>
       {error && <p className="mb-4 text-sm text-danger">{error}</p>}
       {loading && !data ? <p className="text-sm text-muted">Cargando…</p> : (
