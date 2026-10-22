@@ -103,7 +103,7 @@ export function ParticipantsTab({ engagementId }: { engagementId: string }) {
         )}
       </div>
       <section className="card p-5">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Pods</h2>
+        <h2 className="mb-3 font-display text-[15px] font-medium text-ink">Pods</h2>
         {pods.error && <p className="mb-3 text-sm text-danger">{pods.error}</p>}
         {podList.length === 0 ? <p className="text-sm text-muted">Sin pods.</p> : (
           <ul className="space-y-2">

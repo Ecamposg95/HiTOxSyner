@@ -32,7 +32,7 @@ export function chartColors(): ChartColors {
     evidenced: `rgb(${v("--accent-fill")})`,
     in_progress: `rgb(${v("--warn")})`,
     committed: `rgb(${v("--muted")})`,
-    dropped: `rgb(${v("--muted")} / 0.4)`,
+    dropped: `rgb(${v("--muted")} / 0.6)`,
     grid: `rgb(${v("--line")})`,
     text: `rgb(${v("--muted")})`,
   };

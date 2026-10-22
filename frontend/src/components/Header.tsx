@@ -56,20 +56,19 @@ export function Header({ onMenu }: { onMenu: () => void }) {
         {user && (
           <div className="relative" ref={menuRef}>
             <button
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-fill text-xs font-semibold text-accent-ink"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-ink"
               onClick={() => setMenuOpen((o) => !o)}
-              aria-haspopup="menu"
               aria-expanded={menuOpen}
+              aria-controls="user-menu"
               aria-label="Menú de usuario"
             >
               {initials(user.full_name)}
             </button>
             {menuOpen && (
-              <div role="menu" className="card absolute right-0 top-11 z-50 w-64 p-3">
+              <div id="user-menu" className="card absolute right-0 top-11 z-50 w-64 p-3">
                 <div className="text-sm font-medium">{user.full_name}</div>
                 <div className="mb-3 text-[11px] text-muted">{ROLE_LABELS[user.role]} · {user.organization_name}</div>
                 <button
-                  role="menuitem"
                   className="btn w-full justify-center"
                   onClick={() => logout().then(() => navigate("/login"))}
                 >

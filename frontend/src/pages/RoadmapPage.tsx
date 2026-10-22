@@ -98,7 +98,7 @@ export function RoadmapPage() {
                       onKeyDown={writable ? (e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openEdit(m); } } : undefined}
                       tabIndex={writable ? 0 : undefined}
                       role={writable ? "button" : undefined}
-                      className={`rounded border border-line p-2 text-sm ${writable ? "cursor-pointer hover:bg-surface-2 focus:bg-surface-2 focus:outline-none" : ""}`}
+                      className={`rounded border border-line p-2 text-sm ${writable ? "cursor-pointer hover:bg-surface-2 focus:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent" : ""}`}
                     >
                       <div className="font-medium leading-5">{m.name}</div>
                       <div className="mt-1 flex items-center justify-between gap-2">

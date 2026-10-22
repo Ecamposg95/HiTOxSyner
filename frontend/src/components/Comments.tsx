@@ -28,7 +28,7 @@ export function Comments({ entityType, entityId }: { entityType: string; entityI
 
   return (
     <section className="card p-5">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Comments</h2>
+      <h2 className="mb-3 font-display text-[15px] font-medium text-ink">Comments</h2>
       {error && <p className="mb-3 text-sm text-danger">{error}</p>}
       {loading && !data ? <p className="text-sm text-muted">Cargando…</p> : (data?.items.length ?? 0) === 0 ? (
         <p className="text-sm text-muted">Sin comentarios.</p>

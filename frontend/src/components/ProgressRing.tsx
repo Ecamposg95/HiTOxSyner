@@ -6,6 +6,7 @@ export function ProgressRing({ value, size = 56, label }: { value: number; size?
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label ?? `${pct}%`} className="shrink-0">
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-line" />
+      {pct > 0 && (
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -17,6 +18,7 @@ export function ProgressRing({ value, size = 56, label }: { value: number; size?
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
         className="stroke-accent-fill"
       />
+      )}
     </svg>
   );
 }

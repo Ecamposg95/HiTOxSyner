@@ -32,7 +32,7 @@ export function DataTable<T extends { id: string }>({ columns, rows, onRowClick,
               onKeyDown={onRowClick ? (e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRowClick(row); } } : undefined}
               tabIndex={onRowClick ? 0 : undefined}
               role={onRowClick ? "button" : undefined}
-              className={`border-b border-line last:border-0 ${onRowClick ? "cursor-pointer hover:bg-surface-2 focus:bg-surface-2 focus:outline-none" : ""}`}
+              className={`border-b border-line last:border-0 ${onRowClick ? "cursor-pointer hover:bg-surface-2 focus:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent" : ""}`}
             >
               {columns.map((c) => (
                 <td key={c.key} className={`px-4 py-2.5 align-top ${c.className ?? ""}`}>{c.render(row)}</td>

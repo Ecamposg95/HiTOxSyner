@@ -66,7 +66,7 @@ export function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard label="Avance del programa" value={`${tiles.progress_pct}%`} visual={<ProgressRing value={tiles.progress_pct} />} note={<StatusBadge value={tiles.health} />} />
-        <KpiCard label="Initiatives activas" value={tiles.active_initiatives} note={`avance promedio ${avg ?? "—"}% · ${tiles.open_actions} acciones abiertas`} />
+        <KpiCard label="Initiatives activas" value={tiles.active_initiatives} note={`avance promedio ${avg === null ? "—" : `${avg}%`} · ${tiles.open_actions} acciones abiertas`} />
         <KpiCard label="Decisiones pendientes" value={tiles.decisions_required} tone={tiles.decisions_required > 0 ? "warn" : "default"} note="requieren a Dirección" />
         <KpiCard label="Findings críticos" value={tiles.critical_findings} tone={tiles.critical_findings > 0 ? "danger" : "default"} />
       </div>

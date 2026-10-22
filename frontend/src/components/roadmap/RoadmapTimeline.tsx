@@ -1,6 +1,7 @@
 import { EmptyState } from "../EmptyState";
 import { formatDate } from "../../lib/dates";
 import { MILESTONE_STATUSES, ROADMAP_PHASES } from "../../lib/labels";
+import { todayLocal } from "../../lib/cockpit";
 import { buildTimeline, parseLocalDate, positionPct } from "../../lib/timeline";
 import type { Milestone, MilestoneStatus } from "../../types";
 
@@ -13,10 +14,31 @@ const MARKER: Record<MilestoneStatus, string> = {
 
 export function RoadmapTimeline({ milestones, onSelect }: { milestones: Milestone[]; onSelect: (m: Milestone) => void }) {
   const model = buildTimeline(milestones);
-  if (!model) return <EmptyState title="Sin hitos con fecha" />;
+  const undated = milestones.filter((m) => !m.due_date);
+  const undatedSection = undated.length > 0 && (
+    <section className="panel p-4">
+      <h2 className="eyebrow mb-2">Sin fecha</h2>
+      <ul className="space-y-1 text-sm">
+        {undated.map((m) => (
+          <li key={m.id}>
+            <button type="button" className="text-left hover:underline" onClick={() => onSelect(m)}>
+              {m.name} <span className="text-xs text-muted">· {m.phase} · {m.status}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+  if (!model) {
+    return (
+      <div className="space-y-3">
+        <EmptyState title="Sin hitos con fecha" />
+        {undatedSection}
+      </div>
+    );
+  }
 
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const today = todayLocal();
   const showToday = today >= model.start && today < model.end;
   const todayPct = positionPct(model, today);
 
@@ -75,20 +97,7 @@ export function RoadmapTimeline({ milestones, onSelect }: { milestones: Mileston
           </li>
         ))}
       </ul>
-      {model.undated.length > 0 && (
-        <section className="panel p-4">
-          <h2 className="eyebrow mb-2">Sin fecha</h2>
-          <ul className="space-y-1 text-sm">
-            {model.undated.map((m) => (
-              <li key={m.id}>
-                <button type="button" className="text-left hover:underline" onClick={() => onSelect(m)}>
-                  {m.name} <span className="text-xs text-muted">· {m.phase} · {m.status}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {undatedSection}
     </div>
   );
 }

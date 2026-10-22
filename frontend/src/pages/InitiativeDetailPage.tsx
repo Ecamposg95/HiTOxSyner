@@ -86,10 +86,10 @@ export function InitiativeDetailPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard label="Avance" value={`${i.progress_pct}%`} visual={<ProgressRing value={i.progress_pct} />} />
+        <KpiCard label="Avance" value={`${i.progress_pct}%`} visual={<ProgressRing value={i.progress_pct} size={44} />} />
         <KpiCard label="Owner HiTO" value={<span className="font-display text-lg break-words">{i.hito_owner || "—"}</span>} />
-        <KpiCard label="Inicio" value={formatDate(i.start_date)} />
-        <KpiCard label="Objetivo" value={formatDate(i.target_date)} />
+        <KpiCard label="Inicio" value={<span className="font-display text-lg">{formatDate(i.start_date)}</span>} />
+        <KpiCard label="Objetivo" value={<span className="font-display text-lg">{formatDate(i.target_date)}</span>} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
