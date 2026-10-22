@@ -7,6 +7,9 @@ import { EmptyState } from "../components/EmptyState";
 import { ProgressBar } from "../components/ProgressBar";
 import { StatusBadge } from "../components/StatusBadge";
 import { KpiCard } from "../components/KpiCard";
+import { PageHeader } from "../components/PageHeader";
+import { ProgressRing } from "../components/ProgressRing";
+import { avgProgress, initiativeTone, isOverdue, phaseProgress, todayLocal } from "../lib/cockpit";
 import { useResource } from "../hooks/useResource";
 import { formatDate, formatDateTime } from "../lib/dates";
 import { can } from "../lib/roles";
@@ -26,7 +29,26 @@ export function DashboardPage() {
   if (loading && !data) return <p className="text-sm text-muted">Cargando…</p>;
   if (error || !data) return <p className="text-sm text-danger">{error}</p>;
 
-  const healthTone = data.tiles.health === "On Track" ? "ok" : data.tiles.health === "Attention" ? "warn" : "danger";
+  const { tiles, engagement } = data;
+  const today = todayLocal();
+  const avg = avgProgress(data.active_initiatives);
+  const DOT = { accent: "bg-accent", muted: "bg-muted", warn: "bg-warn" } as const;
+  const more = (to: string, label: string) => <Link to={to} className="text-xs text-muted hover:underline">{label}</Link>;
+
+  const nextMilestones = (
+    <Block title="Próximos hitos">
+      {data.next_milestones.length === 0 ? <p className="text-sm text-muted">Sin milestones programados.</p> : (
+        <ul className="space-y-2">
+          {data.next_milestones.map((m) => (
+            <li key={m.id} className="flex items-start justify-between gap-3 text-sm">
+              <span className="min-w-0">{m.name}<span className="block text-xs text-muted">{m.phase}</span></span>
+              <span className="flex shrink-0 items-center gap-2 text-xs tabular-nums text-muted">{formatDate(m.due_date)}<StatusBadge value={m.status} /></span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Block>
+  );
 
   async function saveSummary() {
     try {
@@ -40,22 +62,16 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="text-xs font-semibold tracking-[0.3em]">SYNER × HiTO</div>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">{data.engagement.name}</h1>
-        {data.engagement.subtitle && <p className="text-sm text-muted">{data.engagement.subtitle}</p>}
+      <PageHeader eyebrow="Syner × HiTO · Engagement" title={engagement.name} subtitle={engagement.subtitle ?? undefined} />
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard label="Avance del programa" value={`${tiles.progress_pct}%`} visual={<ProgressRing value={tiles.progress_pct} />} note={<StatusBadge value={tiles.health} />} />
+        <KpiCard label="Initiatives activas" value={tiles.active_initiatives} note={`avance promedio ${avg ?? "—"}% · ${tiles.open_actions} acciones abiertas`} />
+        <KpiCard label="Decisiones pendientes" value={tiles.decisions_required} tone={tiles.decisions_required > 0 ? "warn" : "default"} note="requieren a Dirección" />
+        <KpiCard label="Findings críticos" value={tiles.critical_findings} tone={tiles.critical_findings > 0 ? "danger" : "default"} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <KpiCard label="Engagement Health" value={data.tiles.health} tone={healthTone} />
-        <KpiCard label="Progress" value={`${data.tiles.progress_pct}%`} />
-        <KpiCard label="Active Initiatives" value={data.tiles.active_initiatives} />
-        <KpiCard label="Open Actions" value={data.tiles.open_actions} />
-        <KpiCard label="Decisions Required" value={data.tiles.decisions_required} tone={data.tiles.decisions_required > 0 ? "warn" : "default"} />
-        <KpiCard label="Critical Findings" value={data.tiles.critical_findings} tone={data.tiles.critical_findings > 0 ? "danger" : "default"} />
-      </div>
-
-      <Block title="Executive Summary">
+      <Block title="Resumen ejecutivo">
         {editing ? (
           <div className="space-y-2">
             <textarea className="input min-h-[120px]" value={summary} onChange={(e) => setSummary(e.target.value)} maxLength={2000} />
@@ -67,78 +83,123 @@ export function DashboardPage() {
           </div>
         ) : (
           <div className="flex items-start justify-between gap-4">
-            <p className="whitespace-pre-line text-sm leading-6">{data.engagement.executive_summary || "Sin resumen ejecutivo todavía."}</p>
+            <p className="whitespace-pre-line font-display text-[15px] leading-7">{engagement.executive_summary || "Sin resumen ejecutivo todavía."}</p>
             {can(user, "write") && (
-              <button className="btn" onClick={() => { setSummary(data.engagement.executive_summary); setEditing(true); }}>Editar</button>
+              <button className="btn" onClick={() => { setSummary(engagement.executive_summary); setEditing(true); }}>Editar</button>
             )}
           </div>
         )}
       </Block>
 
-      <Block title="Transformation Roadmap">
-        <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
-          {data.roadmap.map((phase) => {
-            const done = phase.milestones.filter((m) => m.status === "Done").length;
-            return (
-              <Link key={phase.phase} to="/roadmap" className="rounded border border-line px-3 py-2 hover:bg-canvas">
-                <div className="text-sm font-medium">{phase.phase}</div>
-                <div className="text-xs tabular-nums text-muted">{done}/{phase.milestones.length} milestones</div>
-                <ul className="mt-1 space-y-0.5">
-                  {phase.milestones.slice(0, 3).map((m) => (
-                    <li key={m.id} className="truncate text-xs" title={m.name}>{m.name}</li>
-                  ))}
-                </ul>
-              </Link>
-            );
-          })}
-        </div>
-      </Block>
-
       <div className="grid gap-6 lg:grid-cols-2">
-        <Block title="Active Initiatives">
-          {data.active_initiatives.length === 0 ? (
-            <p className="text-sm text-muted">Sin iniciativas activas.</p>
-          ) : (
-            <ul className="space-y-3">
-              {data.active_initiatives.map((i) => (
-                <li key={i.id}>
-                  <div className="flex items-center justify-between gap-3">
-                    <Link to={`/initiatives/${i.id}`} className="text-sm font-medium hover:underline">{i.name}</Link>
-                    <StatusBadge value={i.status} />
-                  </div>
-                  <div className="mt-1 flex items-center gap-3">
-                    <ProgressBar value={i.progress_pct} />
-                    <span className="text-xs tabular-nums text-muted">{i.progress_pct}%</span>
-                  </div>
+        <Block title="Roadmap por fase" action={more("/roadmap", "Roadmap →")}>
+          <ul className="space-y-3">
+            {data.roadmap.map((phase) => {
+              const pct = phaseProgress(phase.milestones);
+              return (
+                <li key={phase.phase} className="flex items-center gap-3 text-sm">
+                  <Link to="/roadmap" className="w-24 shrink-0 font-medium hover:underline">{phase.phase}</Link>
+                  <ProgressBar value={pct ?? 0} />
+                  <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted">{pct === null ? "—" : `${pct}%`}</span>
                 </li>
-              ))}
-            </ul>
-          )}
+              );
+            })}
+          </ul>
         </Block>
 
-        <Block title="Decisions Required">
+        <Block title="Decisiones requeridas" action={more("/decisions", "Decision Log →")}>
           {data.decisions_required.length === 0 ? (
             <p className="text-sm text-muted">Sin decisiones pendientes de aprobación.</p>
           ) : (
             <ul className="space-y-2">
               {data.decisions_required.map((d) => (
                 <li key={d.id} className="flex items-start justify-between gap-3 text-sm">
-                  <Link to="/decisions" className="hover:underline">{d.title}<span className="block text-xs text-muted">{d.owner_name || "Sin owner"}</span></Link>
-                  <StatusBadge value={d.status} />
+                  <Link to="/decisions" className="min-w-0 hover:underline">{d.title}<span className="block text-xs text-muted">{d.owner_name || "Sin owner"}</span></Link>
+                  {d.decided_on ? (
+                    <span className="flex shrink-0 items-center gap-2 text-xs tabular-nums text-muted">
+                      {formatDate(d.decided_on)}
+                      {isOverdue(d.decided_on, today) && <span className="badge badge-danger">Vencida</span>}
+                    </span>
+                  ) : (
+                    <StatusBadge value={d.status} />
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Block>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Block title="Initiatives" action={more("/initiatives", "Initiatives →")}>
+          {data.active_initiatives.length === 0 ? (
+            <p className="text-sm text-muted">Sin iniciativas activas.</p>
+          ) : (
+            <ul className="space-y-2">
+              {data.active_initiatives.map((i) => (
+                <li key={i.id} className="flex items-center gap-2 text-sm">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${DOT[initiativeTone(i.status)]}`} aria-hidden="true" />
+                  <Link to={`/initiatives/${i.id}`} className="min-w-0 flex-1 truncate hover:underline" title={i.name}>{i.name}</Link>
+                  <span className="text-xs tabular-nums text-muted">{i.progress_pct}%</span>
                 </li>
               ))}
             </ul>
           )}
         </Block>
 
-        <Block title="Key Findings">
+        {nextMilestones}
+
+        {data.lab ? (
+          <Block title="Leadership Lab" action={more("/lab", "Leadership Lab →")}>
+            <div className="space-y-4 text-sm">
+              <div>
+                <div className="eyebrow">Próxima sesión</div>
+                {data.lab.next_session ? (
+                  <>
+                    <div className="mt-1 font-medium">{data.lab.next_session.number}. {data.lab.next_session.name}</div>
+                    <div className="text-xs tabular-nums text-muted">{data.lab.next_session.theme} · {formatDate(data.lab.next_session.held_on)}</div>
+                  </>
+                ) : (
+                  <div className="mt-1 text-muted">Sin sesiones pendientes</div>
+                )}
+              </div>
+              <div>
+                <div className="eyebrow">CTAs con evidencia</div>
+                <div className="mt-1 flex items-center gap-3">
+                  <ProgressBar value={data.lab.evidenced_pct} />
+                  <span className="text-xs tabular-nums text-muted">{data.lab.evidenced_pct}%</span>
+                </div>
+                <div className="mt-1 text-xs text-muted">{data.lab.active_contracts} contratos activos</div>
+              </div>
+            </div>
+          </Block>
+        ) : (
+          <Block title="Próximas acciones" action={more("/actions", "Actions →")}>
+            {data.next_actions.length === 0 ? (
+              <p className="text-sm text-muted">Sin acciones abiertas.</p>
+            ) : (
+              <ul className="space-y-2">
+                {data.next_actions.map((a) => (
+                  <li key={a.id} className="flex items-start justify-between gap-3 text-sm">
+                    <span className="min-w-0">{a.title}<span className="block text-xs text-muted">{a.owner_name || "Sin responsable"}</span></span>
+                    <span className="shrink-0 text-xs tabular-nums text-muted">{formatDate(a.due_date)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Block>
+        )}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Block title="Key findings">
           {data.key_findings.length === 0 ? (
             <p className="text-sm text-muted">Sin hallazgos de alto impacto.</p>
           ) : (
             <ul className="space-y-2">
               {data.key_findings.map((f) => (
                 <li key={f.id} className="flex items-start justify-between gap-3 text-sm">
-                  <span>{f.title}</span>
+                  <span className="min-w-0">{f.title}</span>
                   <StatusBadge value={f.impact} />
                 </li>
               ))}
@@ -146,22 +207,7 @@ export function DashboardPage() {
           )}
         </Block>
 
-        <Block title="Next">
-          {data.next_actions.length === 0 ? (
-            <p className="text-sm text-muted">Sin acciones abiertas.</p>
-          ) : (
-            <ul className="space-y-2">
-              {data.next_actions.map((a) => (
-                <li key={a.id} className="flex items-start justify-between gap-3 text-sm">
-                  <span>{a.title}<span className="block text-xs text-muted">{a.owner_name || "Sin responsable"}</span></span>
-                  <span className="text-xs tabular-nums text-muted">{formatDate(a.due_date)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Block>
-
-        <Block title="Recent Activity">
+        <Block title="Actividad reciente">
           {data.recent_activity.length === 0 ? (
             <p className="text-sm text-muted">Sin actividad.</p>
           ) : (
@@ -175,41 +221,6 @@ export function DashboardPage() {
             </ul>
           )}
         </Block>
-
-        <Block title="Next Milestones">
-          {data.next_milestones.length === 0 ? <p className="text-sm text-muted">Sin milestones programados.</p> : (
-            <ul className="space-y-2">
-              {data.next_milestones.map((m) => (
-                <li key={m.id} className="flex items-start justify-between gap-3 text-sm">
-                  <span>{m.name}<span className="block text-xs text-muted">{m.phase}</span></span>
-                  <span className="flex items-center gap-2 text-xs tabular-nums text-muted">{formatDate(m.due_date)}<StatusBadge value={m.status} /></span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Block>
-        {data.lab && (
-          <Block title="Leadership Lab" action={<Link to="/lab" className="text-xs text-muted hover:underline">Leadership Lab →</Link>}>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <div className="text-[11px] font-medium uppercase tracking-wide text-muted">Próxima sesión</div>
-                {data.lab.next_session ? (
-                  <>
-                    <div className="mt-1 font-medium">{data.lab.next_session.number}. {data.lab.next_session.name}</div>
-                    <div className="text-xs tabular-nums text-muted">{data.lab.next_session.theme} · {formatDate(data.lab.next_session.held_on)}</div>
-                  </>
-                ) : (
-                  <div className="mt-1 text-muted">Sin sesiones pendientes</div>
-                )}
-              </div>
-              <div>
-                <div className="text-[11px] font-medium uppercase tracking-wide text-muted">CTAs con evidencia</div>
-                <div className="mt-1 text-2xl font-semibold tabular-nums">{data.lab.evidenced_pct}%</div>
-                <div className="text-xs text-muted">{data.lab.sessions_done}/{data.lab.sessions_total} sesiones · {data.lab.active_ctas} CTAs activos · {data.lab.active_contracts} contratos activos</div>
-              </div>
-            </div>
-          </Block>
-        )}
       </div>
     </div>
   );
