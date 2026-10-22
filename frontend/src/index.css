@@ -5,57 +5,57 @@
 /* Tokens como tripletas "R G B" para que Tailwind pueda aplicar alpha. */
 :root, [data-theme="dark"] {
   color-scheme: dark;
-  --canvas: 10 16 32;
-  --surface: 13 20 38;
-  --surface-2: 19 28 51;
-  --line: 26 34 54;
-  --ink: 237 239 245;
-  --muted: 142 151 173;
-  --accent: 92 255 157;
-  --accent-fill: 92 255 157;
-  --accent-ink: 6 38 26;
+  --canvas: 27 29 32;
+  --surface: 38 40 43;
+  --surface-2: 51 54 59;
+  --line: 62 66 71;
+  --ink: 244 246 243;
+  --muted: 166 170 176;
+  --accent: 128 196 28;
+  --accent-fill: 128 196 28;
+  --accent-ink: 27 29 32;
   --warn: 255 194 75;
   --danger: 255 122 122;
-  --nav: 7 12 24;
-  --nav-ink: 237 239 245;
-  --nav-accent: 92 255 157;
+  --nav: 20 22 24;
+  --nav-ink: 244 246 243;
+  --nav-accent: 128 196 28;
   /* Badges: fondo = color de estado translúcido, texto = color de estado. */
-  --badge-bg-alpha: .12;
-  --badge-ok-bg: 92 255 157;
-  --badge-ok-fg: 92 255 157;
+  --badge-bg-alpha: .14;
+  --badge-ok-bg: 128 196 28;
+  --badge-ok-fg: 128 196 28;
   --badge-warn-bg: 255 194 75;
   --badge-warn-fg: 255 194 75;
   --badge-danger-bg: 255 122 122;
   --badge-danger-fg: 255 122 122;
-  --badge-neutral-bg: 142 151 173;
-  --badge-neutral-fg: 142 151 173;
+  --badge-neutral-bg: 166 170 176;
+  --badge-neutral-fg: 166 170 176;
 }
 
 [data-theme="light"] {
   color-scheme: light;
-  --canvas: 247 246 242;
+  --canvas: 244 246 243;
   --surface: 255 255 255;
-  --surface-2: 241 239 232;
-  --line: 230 227 218;
-  --ink: 10 16 32;
-  --muted: 95 102 120;
-  --accent: 11 122 65;
-  --accent-fill: 14 159 85;
+  --surface-2: 238 241 234;
+  --line: 217 221 215;
+  --ink: 38 40 43;
+  --muted: 91 93 98;
+  --accent: 63 110 14;
+  --accent-fill: 128 196 28;
   --accent-ink: 255 255 255;
   --warn: 154 91 0;
   --danger: 194 49 47;
-  --nav: 10 16 32;
-  --nav-ink: 237 239 245;
-  --nav-accent: 92 255 157;
+  --nav: 38 40 43;
+  --nav-ink: 244 246 243;
+  --nav-accent: 128 196 28;
   --badge-bg-alpha: 1;
-  --badge-ok-bg: 221 251 233;
-  --badge-ok-fg: 11 122 65;
+  --badge-ok-bg: 230 242 210;
+  --badge-ok-fg: 63 110 14;
   --badge-warn-bg: 255 241 214;
   --badge-warn-fg: 154 91 0;
   --badge-danger-bg: 253 226 225;
   --badge-danger-fg: 163 32 32;
-  --badge-neutral-bg: 241 239 232;
-  --badge-neutral-fg: 95 102 120;
+  --badge-neutral-bg: 238 241 234;
+  --badge-neutral-fg: 91 93 98;
 }
 
 @layer base {
@@ -66,7 +66,7 @@
   .card, .panel { @apply rounded-[10px] border border-line bg-surface; }
   [data-theme="dark"] .card, [data-theme="dark"] .panel,
   :root:not([data-theme]) .card, :root:not([data-theme]) .panel {
-    background-image: linear-gradient(180deg, #0D1426, #111A30);
+    background-image: linear-gradient(180deg, #26282B, #2C2F33);
   }
   .btn { @apply inline-flex items-center gap-2 rounded-md border border-line bg-surface-2 px-3 py-1.5 text-sm font-medium text-ink hover:border-accent/40 disabled:opacity-50; }
   .btn-primary { @apply border-accent bg-accent text-accent-ink hover:border-accent hover:opacity-90; }
