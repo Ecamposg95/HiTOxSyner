@@ -7,7 +7,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const user = useAuthStore((s) => s.user);
   const groups = NAV_GROUPS.map((g) => ({
     ...g,
-    items: g.items.filter((item) => item.to !== "/lab" || can(user, "viewLabSummary")),
+    items: g.items.filter((item) => !item.requires || can(user, item.requires)),
   })).filter((g) => g.items.length > 0);
   return (
     <aside className="flex h-full w-60 flex-col bg-nav text-nav-ink">

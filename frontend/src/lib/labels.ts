@@ -1,9 +1,12 @@
 import type { Role } from "../types";
+import type { Capability } from "./roles";
 
 export interface NavItem {
   to: string;
   label: string;
   end?: boolean;
+  /** Capacidad necesaria para ver el ítem; sin ella, visible para todos. */
+  requires?: Capability;
 }
 export interface NavGroup {
   label: string | null;
@@ -29,7 +32,13 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: "/documents", label: "Documents" },
     ],
   },
-  { label: "Liderazgo", items: [{ to: "/lab", label: "Leadership Lab" }] },
+  {
+    label: "Liderazgo",
+    items: [
+      { to: "/lab", label: "Leadership Lab", requires: "viewLabSummary" },
+      { to: "/pressure-room", label: "Pressure Room", requires: "manageLab" },
+    ],
+  },
 ];
 
 export const ROLE_LABELS: Record<Role, string> = {

@@ -13,6 +13,7 @@ import { MeetingsPage } from "./pages/MeetingsPage";
 import { MeetingDetailPage } from "./pages/MeetingDetailPage";
 import { RoadmapPage } from "./pages/RoadmapPage";
 import { LoginPage } from "./pages/LoginPage";
+import { PressureRoomPage } from "./pages/PressureRoomPage";
 import { useAuthStore } from "./stores/auth";
 import { useEngagementStore } from "./stores/engagement";
 
@@ -61,6 +62,7 @@ export const router = createBrowserRouter([
           { path: "/meetings/:id", element: <MeetingDetailPage /> },
           { path: "/documents", element: <DocumentsPage /> },
           { path: "/lab", element: <LabPage /> },
+          { path: "/pressure-room", element: <PressureRoomPage /> },
           { path: "*", element: <Navigate to="/" replace /> },
         ],
       },
