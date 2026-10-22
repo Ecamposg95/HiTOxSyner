@@ -63,8 +63,9 @@ export const LAB_SESSION_CATALOG = [
   { number: 4, name: "AI, Judgment & Collective Accountability", theme: "TRANSFORMAR" },
 ] as const;
 
-export type LabTab = "sessions" | "participants" | "ctas" | "contracts";
+export type LabTab = "summary" | "sessions" | "participants" | "ctas" | "contracts";
 export const LAB_TABS: { key: LabTab; label: string }[] = [
+  { key: "summary", label: "Resumen" },
   { key: "sessions", label: "Sessions" },
   { key: "participants", label: "Participants & Pods" },
   { key: "ctas", label: "CTA Tracker" },
