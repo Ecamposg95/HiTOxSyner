@@ -33,7 +33,7 @@ Tailwind mapea sus colores a variables (`rgb(var(--x) / <alpha-value>)`), así l
 | `line` (bordes) | `rgba(255,255,255,.07)` ≈ `#1A2236` | `#E6E3DA` |
 | `ink` (texto) | `#EDEFF5` | `#0A1020` |
 | `muted` | `#8E97AD` | `#5F6678` |
-| `accent` (señal positiva, activo) | `#5CFF9D` neón | `#0E9F55` esmeralda |
+| `accent` (señal positiva, activo) | `#5CFF9D` neón | `#0B7A41` esmeralda (5.4:1 sobre blanco; `#0E9F55` solo para rellenos de barras/gráficas) |
 | `accent-ink` (texto sobre accent) | `#06261A` | `#FFFFFF` |
 | `warn` | `#FFC24B` | `#9A5B00` |
 | `danger` | `#FF7A7A` | `#C2312F` |
@@ -72,7 +72,7 @@ Badges: fondo = color de estado al 12% (oscuro) o tono pastel (claro: ok `#DDFBE
 Orden, de arriba abajo (todo con datos existentes de `GET /engagements/{id}/dashboard`):
 
 1. **Encabezado:** eyebrow "Syner × HiTO · Engagement", h1 con `engagement.name`, subtítulo.
-2. **Hero de 4 KPIs:** (a) Avance del programa — `ProgressRing` con `tiles.progress_pct` + badge de `tiles.health`; (b) Initiatives activas — `tiles.active_initiatives`, nota "avance promedio N%" calculada de `active_initiatives`; (c) Decisiones pendientes — `tiles.decisions_required` (tono warn si > 0), nota "requieren a Dirección"; (d) Findings críticos — `tiles.critical_findings` (tono danger si > 0). `tiles.open_actions` va como quinto KPI compacto en la fila o dentro del panel de acciones (ver 4).
+2. **Hero de 4 KPIs:** (a) Avance del programa — `ProgressRing` con `tiles.progress_pct` + badge de `tiles.health`; (b) Initiatives activas — `tiles.active_initiatives`, nota "avance promedio N% · M acciones abiertas" (promedio de `progress_pct` de `active_initiatives`, "—" si vacía; M = `tiles.open_actions`); (c) Decisiones pendientes — `tiles.decisions_required` (tono warn si > 0), nota "requieren a Dirección"; (d) Findings críticos — `tiles.critical_findings` (tono danger si > 0).
 3. **Resumen ejecutivo:** texto en Fraunces 15 px; edición inline como hoy (solo quien puede).
 4. **Fila 2 columnas:** *Roadmap por fase* (una barra por fase de `roadmap`, % = hitos Done / total de la fase, "—" si sin hitos; enlace a /roadmap) | *Decisiones requeridas* (de `decisions_required`, con badge de fecha; "Vencida" en danger si due < hoy; enlace a /decisions).
 5. **Fila 3 columnas:** *Initiatives* (de `active_initiatives`: punto de color por estado, nombre, % avance) | *Próximos hitos* (`next_milestones`) | *Leadership Lab* (si `lab`: próxima sesión, barra de evidencia, contratos activos) — si `lab` es null, la columna la ocupan *Próximas acciones* (`next_actions`).
