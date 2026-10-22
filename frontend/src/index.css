@@ -2,10 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tokens como tripletas "R G B" para que Tailwind pueda aplicar alpha. */
+:root, [data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: 10 16 32;
+  --surface: 13 20 38;
+  --surface-2: 19 28 51;
+  --line: 26 34 54;
+  --ink: 237 239 245;
+  --muted: 142 151 173;
+  --accent: 92 255 157;
+  --accent-fill: 92 255 157;
+  --accent-ink: 6 38 26;
+  --warn: 255 194 75;
+  --danger: 255 122 122;
+  --nav: 7 12 24;
+  --nav-ink: 237 239 245;
+  --nav-accent: 92 255 157;
+  /* Badges: fondo = color de estado translúcido, texto = color de estado. */
+  --badge-bg-alpha: .12;
+  --badge-ok-bg: 92 255 157;
+  --badge-ok-fg: 92 255 157;
+  --badge-warn-bg: 255 194 75;
+  --badge-warn-fg: 255 194 75;
+  --badge-danger-bg: 255 122 122;
+  --badge-danger-fg: 255 122 122;
+  --badge-neutral-bg: 142 151 173;
+  --badge-neutral-fg: 142 151 173;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --canvas: 247 246 242;
+  --surface: 255 255 255;
+  --surface-2: 241 239 232;
+  --line: 230 227 218;
+  --ink: 10 16 32;
+  --muted: 95 102 120;
+  --accent: 11 122 65;
+  --accent-fill: 14 159 85;
+  --accent-ink: 255 255 255;
+  --warn: 154 91 0;
+  --danger: 194 49 47;
+  --nav: 10 16 32;
+  --nav-ink: 237 239 245;
+  --nav-accent: 92 255 157;
+  --badge-bg-alpha: 1;
+  --badge-ok-bg: 221 251 233;
+  --badge-ok-fg: 11 122 65;
+  --badge-warn-bg: 255 241 214;
+  --badge-warn-fg: 154 91 0;
+  --badge-danger-bg: 253 226 225;
+  --badge-danger-fg: 163 32 32;
+  --badge-neutral-bg: 241 239 232;
+  --badge-neutral-fg: 95 102 120;
+}
+
+@layer base {
+  body { @apply bg-canvas font-sans text-ink antialiased; }
+}
+
 @layer components {
-  .card { @apply rounded-md border border-line bg-white; }
-  .btn { @apply inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-1.5 text-sm font-medium text-ink hover:bg-canvas disabled:opacity-50; }
-  .btn-primary { @apply border-ink bg-ink text-white hover:bg-gray-800; }
-  .input { @apply w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink focus:border-ink focus:outline-none; }
-  .label { @apply mb-1 block text-xs font-medium uppercase tracking-wide text-muted; }
+  .card, .panel { @apply rounded-[10px] border border-line bg-surface; }
+  [data-theme="dark"] .card, [data-theme="dark"] .panel,
+  :root:not([data-theme]) .card, :root:not([data-theme]) .panel {
+    background-image: linear-gradient(180deg, #0D1426, #111A30);
+  }
+  .btn { @apply inline-flex items-center gap-2 rounded-md border border-line bg-surface-2 px-3 py-1.5 text-sm font-medium text-ink hover:border-ink/20 disabled:opacity-50; }
+  .btn-primary { @apply border-accent bg-accent text-accent-ink hover:border-accent hover:opacity-90; }
+  .btn-ghost { @apply border-transparent bg-transparent hover:border-transparent hover:bg-surface-2; }
+  .input { @apply w-full rounded-md border border-line bg-surface-2 px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent; }
+  .eyebrow { @apply text-[10.5px] font-medium uppercase tracking-[0.2em] text-muted; }
+  .label { @apply mb-1 block text-[10.5px] font-medium uppercase tracking-[0.2em] text-muted; }
+  .kpi-value { @apply font-display text-[30px] font-medium leading-none tabular-nums; }
+  .badge { @apply inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium; }
+  .badge-ok { background: rgb(var(--badge-ok-bg) / var(--badge-bg-alpha)); color: rgb(var(--badge-ok-fg)); }
+  .badge-warn { background: rgb(var(--badge-warn-bg) / var(--badge-bg-alpha)); color: rgb(var(--badge-warn-fg)); }
+  .badge-danger { background: rgb(var(--badge-danger-bg) / var(--badge-bg-alpha)); color: rgb(var(--badge-danger-fg)); }
+  .badge-neutral { background: rgb(var(--badge-neutral-bg) / var(--badge-bg-alpha)); color: rgb(var(--badge-neutral-fg)); }
 }
