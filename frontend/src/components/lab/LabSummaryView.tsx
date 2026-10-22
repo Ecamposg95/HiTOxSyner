@@ -5,13 +5,13 @@ import type { CtaStatusTotals } from "../../types";
 import { EmptyState } from "../EmptyState";
 import { PageHeader } from "../PageHeader";
 import { StatusBadge } from "../StatusBadge";
-import { Tile } from "../Tile";
+import { KpiCard } from "../KpiCard";
 
 const SEGMENTS: { key: keyof Omit<CtaStatusTotals, "total">; label: string; className: string }[] = [
   { key: "evidenced", label: "Evidenced", className: "bg-accent" },
   { key: "in_progress", label: "In Progress", className: "bg-warn" },
-  { key: "committed", label: "Committed", className: "bg-gray-400" },
-  { key: "dropped", label: "Dropped", className: "bg-gray-200" },
+  { key: "committed", label: "Committed", className: "bg-muted" },
+  { key: "dropped", label: "Dropped", className: "bg-line" },
 ];
 
 export function CtaStatusBar({ totals }: { totals: CtaStatusTotals }) {
@@ -67,10 +67,10 @@ export function LabSummaryView({ engagementId }: { engagementId: string }) {
       {data.sessions.length === 0 ? <EmptyState title="El Lab aún no tiene sesiones programadas" /> : (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <Tile label="Sesiones realizadas" value={`${data.sessions_done}/${data.sessions.length}`} />
-            <Tile label="CTAs activos" value={activeCtas} />
-            <Tile label="CTAs con evidencia" value={`${data.evidenced_pct}%`} tone={data.evidenced_pct >= 50 ? "ok" : "default"} />
-            <Tile label="Contratos activos" value={data.active_contracts} />
+            <KpiCard label="Sesiones realizadas" value={`${data.sessions_done}/${data.sessions.length}`} />
+            <KpiCard label="CTAs activos" value={activeCtas} />
+            <KpiCard label="CTAs con evidencia" value={`${data.evidenced_pct}%`} tone={data.evidenced_pct >= 50 ? "ok" : "default"} />
+            <KpiCard label="Contratos activos" value={data.active_contracts} />
           </div>
           <section className="card p-5">
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Sesiones</h2>

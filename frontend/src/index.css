@@ -68,7 +68,7 @@
   :root:not([data-theme]) .card, :root:not([data-theme]) .panel {
     background-image: linear-gradient(180deg, #0D1426, #111A30);
   }
-  .btn { @apply inline-flex items-center gap-2 rounded-md border border-line bg-surface-2 px-3 py-1.5 text-sm font-medium text-ink hover:border-ink/20 disabled:opacity-50; }
+  .btn { @apply inline-flex items-center gap-2 rounded-md border border-line bg-surface-2 px-3 py-1.5 text-sm font-medium text-ink hover:border-accent/40 disabled:opacity-50; }
   .btn-primary { @apply border-accent bg-accent text-accent-ink hover:border-accent hover:opacity-90; }
   .btn-ghost { @apply border-transparent bg-transparent hover:border-transparent hover:bg-surface-2; }
   .input { @apply w-full rounded-md border border-line bg-surface-2 px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent; }

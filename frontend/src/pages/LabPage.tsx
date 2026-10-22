@@ -25,7 +25,7 @@ export function LabPage() {
           <button
             key={t.key}
             type="button"
-            className={`-mb-px border-b-2 px-3 py-2 text-sm ${tab === t.key ? "border-ink font-medium text-ink" : "border-transparent text-muted hover:text-ink"}`}
+            className={`-mb-px border-b-2 px-3 py-2 text-sm ${tab === t.key ? "border-accent font-medium text-ink" : "border-transparent text-muted hover:text-ink"}`}
             aria-current={tab === t.key ? "page" : undefined}
             onClick={() => setParams({ tab: t.key })}
           >

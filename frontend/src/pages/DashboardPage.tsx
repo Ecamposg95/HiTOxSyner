@@ -6,7 +6,7 @@ import { Block } from "../components/Block";
 import { EmptyState } from "../components/EmptyState";
 import { ProgressBar } from "../components/ProgressBar";
 import { StatusBadge } from "../components/StatusBadge";
-import { Tile } from "../components/Tile";
+import { KpiCard } from "../components/KpiCard";
 import { useResource } from "../hooks/useResource";
 import { formatDate, formatDateTime } from "../lib/dates";
 import { can } from "../lib/roles";
@@ -47,12 +47,12 @@ export function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Tile label="Engagement Health" value={data.tiles.health} tone={healthTone} />
-        <Tile label="Progress" value={`${data.tiles.progress_pct}%`} />
-        <Tile label="Active Initiatives" value={data.tiles.active_initiatives} />
-        <Tile label="Open Actions" value={data.tiles.open_actions} />
-        <Tile label="Decisions Required" value={data.tiles.decisions_required} tone={data.tiles.decisions_required > 0 ? "warn" : "default"} />
-        <Tile label="Critical Findings" value={data.tiles.critical_findings} tone={data.tiles.critical_findings > 0 ? "danger" : "default"} />
+        <KpiCard label="Engagement Health" value={data.tiles.health} tone={healthTone} />
+        <KpiCard label="Progress" value={`${data.tiles.progress_pct}%`} />
+        <KpiCard label="Active Initiatives" value={data.tiles.active_initiatives} />
+        <KpiCard label="Open Actions" value={data.tiles.open_actions} />
+        <KpiCard label="Decisions Required" value={data.tiles.decisions_required} tone={data.tiles.decisions_required > 0 ? "warn" : "default"} />
+        <KpiCard label="Critical Findings" value={data.tiles.critical_findings} tone={data.tiles.critical_findings > 0 ? "danger" : "default"} />
       </div>
 
       <Block title="Executive Summary">
