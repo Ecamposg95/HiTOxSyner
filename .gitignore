@@ -6,3 +6,6 @@ __pycache__/
 frontend/node_modules/
 frontend/dist/
 frontend/tsconfig.tsbuildinfo
+
+# scratch de superpowers (sesiones de Claude)
+.superpowers/
