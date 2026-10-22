@@ -58,7 +58,7 @@ export function DocumentsPage() {
 
   return (
     <>
-      <PageHeader title="Documents" subtitle="Repositorio del engagement: entregables, evidencia y minutas" action={writable && <button className="btn btn-primary" onClick={openCreate}>Nuevo documento</button>} />
+      <PageHeader eyebrow="Ejecución" title="Documents" subtitle="Repositorio del engagement: entregables, evidencia y minutas" action={writable && <button className="btn btn-primary" onClick={openCreate}>Nuevo documento</button>} />
       <div className="mb-4 w-48"><Select value={category} onChange={setCategory} options={DOCUMENT_CATEGORIES} allowEmpty="Todas las categorías" /></div>
       {error && <p className="mb-4 text-sm text-danger">{error}</p>}
       {loading && !data ? <p className="text-sm text-muted">Cargando…</p> : (

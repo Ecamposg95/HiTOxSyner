@@ -28,7 +28,7 @@ export function LabPage() {
   const tab: LabTab = LAB_TABS.find((t) => t.key === params.get("tab"))?.key ?? "summary";
   return (
     <>
-      <PageHeader title="Executive Leadership Lab" subtitle="Sesiones, participantes, CTA tracker y Leadership Action Contracts" />
+      <PageHeader eyebrow="Liderazgo" title="Executive Leadership Lab" subtitle="Sesiones, participantes, CTA tracker y Leadership Action Contracts" />
       <nav className="mb-5 flex flex-wrap gap-1 border-b border-line" aria-label="Secciones del Lab">
         {LAB_TABS.map((t) => (
           <button

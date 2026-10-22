@@ -68,7 +68,8 @@ export function MeetingDetailPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <Link to="/meetings" className="text-xs text-muted hover:underline">← Meetings</Link>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight">{m.title}</h1>
+            <div className="eyebrow mt-2">Ejecución</div>
+            <h1 className="mt-1 font-display text-xl font-medium tracking-tight break-words">{m.title}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted">
               <span className="tabular-nums">{formatDateTime(m.held_on)}</span>
               <span>Participantes: {m.participants || "—"}</span>
