@@ -1,15 +1,35 @@
 import type { Role } from "../types";
 
-export const NAV_ITEMS = [
-  { to: "/", label: "Overview", end: true },
-  { to: "/findings", label: "Findings" },
-  { to: "/initiatives", label: "Initiatives" },
-  { to: "/roadmap", label: "Roadmap" },
-  { to: "/actions", label: "Actions" },
-  { to: "/decisions", label: "Decisions" },
-  { to: "/meetings", label: "Meetings" },
-  { to: "/documents", label: "Documents" },
-  { to: "/lab", label: "Leadership Lab" },
+export interface NavItem {
+  to: string;
+  label: string;
+  end?: boolean;
+}
+export interface NavGroup {
+  label: string | null;
+  items: NavItem[];
+}
+
+export const NAV_GROUPS: NavGroup[] = [
+  { label: null, items: [{ to: "/", label: "Overview", end: true }] },
+  {
+    label: "Estrategia",
+    items: [
+      { to: "/findings", label: "Findings" },
+      { to: "/initiatives", label: "Initiatives" },
+      { to: "/roadmap", label: "Roadmap" },
+    ],
+  },
+  {
+    label: "Ejecución",
+    items: [
+      { to: "/actions", label: "Actions" },
+      { to: "/decisions", label: "Decisions" },
+      { to: "/meetings", label: "Meetings" },
+      { to: "/documents", label: "Documents" },
+    ],
+  },
+  { label: "Liderazgo", items: [{ to: "/lab", label: "Leadership Lab" }] },
 ];
 
 export const ROLE_LABELS: Record<Role, string> = {
